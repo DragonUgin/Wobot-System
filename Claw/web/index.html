@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>乌波 // 极限挑战游戏系统</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Archivo+Black&family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#e8e1cf;--bg-light:#f1ebd9;--bg-card:#ede5d5;--panel-bg:#0d0a08;
+  --border:#1a1612;--amber:#d97706;--amber-bright:#f59e0b;--amber-pale:#fde68a;
+  --mustard:#ca8a04;--orange:#ea580c;--red:#b91c1c;--green:#15803d;--green-bright:#22c55e;--teal:#0e7490;--teal-bright:#22d3ee;
+  --warm-gray:#78716c;--warm-gray-light:#a8a29e;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --display:'Archivo Black','Arial Black',sans-serif;
+  --cn:'Noto Sans SC',sans-serif;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--mono);background:var(--bg);color:var(--border);min-height:100vh;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.012) 3px,rgba(0,0,0,0.012) 4px),
+    radial-gradient(circle at 25% 15%,rgba(217,119,6,0.06),transparent 55%),
+    radial-gradient(circle at 75% 85%,rgba(180,83,9,0.05),transparent 60%);
+  overflow-x:hidden;}
+@keyframes heroGlitch{0%,100%{clip-path:inset(0 0 0 0);transform:translate(0)}5%{clip-path:inset(20% 0 60% 0);transform:translate(-3px,1px)}10%{clip-path:inset(50% 0 30% 0);transform:translate(2px,-1px)}15%{clip-path:inset(10% 0 70% 0);transform:translate(-1px)}20%{clip-path:inset(0 0 0 0);transform:translate(0)}}
+@keyframes heroEntrance{from{opacity:0;transform:translateY(-40px) scale(0.95);filter:blur(4px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes slideInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes barFill{from{width:0%}}
+@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0.15}}
+@keyframes glowPulse{0%,100%{text-shadow:0 0 2px var(--amber-bright),0 0 6px var(--amber)}50%{text-shadow:0 0 4px var(--amber-bright),0 0 12px var(--amber),0 0 20px #92400e}}
+@keyframes shakeX{0%,100%{transform:translateX(0)}15%{transform:translateX(-6px) rotate(-1deg)}30%{transform:translateX(6px) rotate(1deg)}45%{transform:translateX(-4px) rotate(-0.5deg)}60%{transform:translateX(4px) rotate(0.5deg)}75%{transform:translateX(-2px)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+.topbar{position:relative;z-index:10;background:var(--border);color:var(--amber-bright);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid var(--amber);box-shadow:0 6px 0 0 rgba(0,0,0,0.2);overflow:hidden;}
+.topbar::after{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--amber-bright),transparent);}
+.brand h1{font-family:var(--display);font-size:24px;font-weight:900;color:var(--amber-bright);animation:glowPulse 3s infinite,heroEntrance 0.8s ease-out;}
+.sub{font-size:11px;font-weight:700;color:var(--amber);letter-spacing:2px;text-transform:uppercase;margin-left:14px;}
+.top-status{display:flex;align-items:center;gap:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;}
+.dot{width:8px;height:8px;background:var(--green-bright);display:inline-block;margin-right:6px;box-shadow:0 0 8px var(--green-bright);animation:blink 1.5s infinite;}
+.clock{color:var(--amber-bright);font-weight:800;font-size:12px;}
+
+.nav-bar{display:flex;border-bottom:4px solid var(--border);background:var(--bg-card);z-index:5;position:relative;}
+.nav-tab{flex:1;padding:12px 6px;text-align:center;font-family:var(--display);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;cursor:pointer;border-right:3px solid var(--border);transition:all 0.12s;color:var(--border);}
+.nav-tab:last-child{border-right:none;}
+.nav-tab:hover{background:var(--amber);}
+.nav-tab.active{background:var(--border);color:var(--amber-bright);}
+
+.marquee-bar{background:var(--border);border-bottom:3px solid var(--amber);overflow:hidden;position:relative;z-index:9;display:flex;align-items:center;}
+.marquee-label{background:var(--amber);color:var(--border);font-family:var(--display);font-size:11px;font-weight:900;padding:10px 14px;text-transform:uppercase;letter-spacing:2px;border-right:3px solid var(--border);z-index:2;}
+.marquee-track{display:flex;flex:1;animation:marquee 28s linear infinite;white-space:nowrap;}
+.marquee-track:hover{animation-play-state:paused;}
+.mq-item{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-right:1px solid #2a2520;font-size:12px;color:var(--amber-bright);cursor:pointer;transition:all 0.12s;}
+.mq-item:hover{background:var(--amber);color:var(--border);}
+.mq-time{color:var(--warm-gray-light);font-size:10px;font-weight:700;}
+.mq-name{color:var(--bg-light);font-weight:800;}
+.mq-item.selected{border:2px solid var(--amber);border-radius:3px;margin:-2px;}
+.mq-undo{background:var(--red);color:#fff;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:800;cursor:pointer;margin-left:6px;transition:all 0.12s;}
+.mq-undo:hover{background:var(--amber);color:var(--border);}
+
+.terminal{background:var(--panel-bg);color:var(--amber-bright);border:3px solid var(--border);box-shadow:6px 6px 0 0 var(--border);position:relative;overflow:hidden;margin-bottom:18px;}
+.terminal-head{background:var(--border);color:var(--amber-bright);padding:9px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:2px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--amber);}
+.terminal-head .cls{color:var(--orange);font-size:10px;animation:blink 1.8s infinite;}
+.terminal-body{padding:16px;font-size:12px;line-height:1.8;position:relative;min-height:160px;}
+.terminal-body::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(217,119,6,0.04) 2px,rgba(217,119,6,0.04) 4px);pointer-events:none;}
+.tl{color:var(--green-bright);}.tk{color:var(--amber);}.tv{color:var(--bg-light);}.tw{color:var(--orange);}.to{color:var(--green-bright);}
+.tcursor{display:inline-block;width:7px;height:14px;background:var(--amber-bright);vertical-align:middle;margin-left:2px;animation:blink 0.7s step-end infinite;}
+
+.main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:24px;}
+
+.panel{background:var(--bg-card);border:3px solid var(--border);box-shadow:6px 6px 0 0 var(--border);margin-bottom:18px;position:relative;transition:transform 0.15s,box-shadow 0.15s;}
+.panel:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 0 var(--border);}
+.panel-header{background:var(--amber);color:var(--border);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;border-bottom:3px solid var(--border);}
+.panel-header.dark{background:var(--border);color:var(--amber-bright);}
+.panel-header .tag{background:var(--border);color:var(--amber-bright);font-size:9px;font-weight:800;padding:2px 8px;}
+.panel-header.dark .tag{background:var(--amber);color:var(--border);}
+.panel-body{padding:14px;}
+
+.timer-block{text-align:center;padding:20px 14px;}
+.timer-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:3px;color:var(--warm-gray);margin-bottom:8px;}
+.timer-display{font-size:72px;font-weight:800;line-height:1;letter-spacing:-2px;text-shadow:4px 4px 0 var(--amber);}
+.timer-colon{animation:blink 1s step-end infinite;}
+.timer-status-line{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--green);margin-top:10px;}
+
+.dew-progress{margin:14px 0;}
+.dew-bar{height:28px;border:3px solid var(--border);background:var(--bg-light);position:relative;overflow:hidden;}
+.dew-bar-fill{height:100%;background:var(--amber);transition:width 1.2s ease;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--border);}
+.dew-text{text-align:center;font-size:14px;font-weight:800;margin-top:6px;}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;margin-bottom:0;}
+.stat-box{background:var(--bg-card);border:3px solid var(--border);box-shadow:4px 4px 0 0 var(--border);padding:14px 6px;text-align:center;cursor:pointer;transition:all 0.12s;}
+.stat-box:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 0 var(--border);}
+.stat-box .st-num{font-family:var(--display);font-size:32px;font-weight:900;line-height:1;}
+.stat-box .st-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;margin-top:4px;}
+.sa{animation:slideInUp 0.4s 0.1s both;}
+.sd{animation:slideInUp 0.4s 0.2s both;}
+.sr{animation:slideInUp 0.4s 0.3s both;}
+
+.rank-table{width:100%;border-collapse:collapse;font-family:var(--mono);}
+.rank-table th{background:var(--border);color:var(--amber-bright);font-family:var(--display);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px;padding:9px 6px;border:2px solid var(--border);}
+.rank-table td{padding:8px 6px;border:2px solid var(--border);text-align:center;font-weight:700;font-size:12px;background:var(--bg-light);transition:background 0.12s;}
+.rank-table tbody tr:hover td{background:var(--amber-pale);}
+.rank-table td.c-green{color:var(--green);font-weight:800;}
+.rank-table td.c-red{color:var(--red);font-weight:800;}
+.rank-table td.c-amber{color:var(--amber);font-weight:800;}
+.rank-table td.c-gray{color:var(--warm-gray);font-weight:800;}
+.hp-outer{display:inline-block;width:100%;height:10px;background:var(--bg-light);border:1px solid var(--border);vertical-align:middle;overflow:hidden;}
+.hp-inner{display:block;height:100%;background:var(--green);transition:width 0.4s;}
+.hp-inner.hp-critical{background:var(--red);}
+
+.controls{display:flex;gap:0;margin-top:18px;}
+.ctrl-btn{flex:1;padding:16px 8px;font-family:var(--display);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:2px;background:var(--bg-card);color:var(--border);border:3px solid var(--border);border-right:none;cursor:pointer;box-shadow:5px 5px 0 0 var(--border);transition:all 0.1s;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.ctrl-btn:last-child{border-right:3px solid var(--border);}
+.ctrl-btn:hover{background:var(--amber);transform:translate(-2px,-2px);box-shadow:7px 7px 0 0 var(--border);}
+.ctrl-btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 0 var(--border);}
+.ctrl-btn.danger{background:var(--red);color:var(--bg-light);}
+.ctrl-btn.danger:hover{background:var(--border);color:var(--amber-bright);}
+.ctrl-icon{width:18px;height:18px;display:block;}
+
+.dur-pills{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 2px;}
+.dur-pill{display:inline-block;padding:6px 11px;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--warm-gray);border:2px solid var(--border);background:var(--bg-card);cursor:pointer;box-shadow:2px 2px 0 0 var(--border);transition:all 0.1s;user-select:none;}
+.dur-pill:hover{color:var(--amber-bright);border-color:var(--amber);transform:translate(-1px,-1px);box-shadow:3px 3px 0 0 var(--border);}
+.dur-pill.active{background:var(--amber);color:#0d0a08;border-color:var(--amber);box-shadow:3px 3px 0 0 var(--border);}
+
+.input-mono{font-family:var(--mono);padding:8px 10px;border:2px solid var(--border);background:var(--bg-light);font-size:13px;font-weight:700;color:var(--border);width:100%;}
+.input-mono:focus{outline:none;border-color:var(--amber);}
+select.input-mono{width:auto;}
+.btn-sm{font-family:var(--display);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;padding:7px 14px;cursor:pointer;color:var(--border);background:var(--bg-card);border:2px solid var(--border);box-shadow:3px 3px 0 0 var(--border);transition:all 0.1s;white-space:nowrap;}
+.btn-sm:hover{background:var(--amber);transform:translate(-1px,-1px);box-shadow:4px 4px 0 0 var(--border);}
+.btn-sm:active{transform:translate(2px,2px);box-shadow:1px 1px 0 0 var(--border);}
+.btn-sm.danger{background:var(--red);color:var(--bg-light);}
+.btn-sm.green{background:var(--green);color:var(--bg-light);}
+.btn-sm.green:hover{background:var(--amber);color:var(--border);}
+.btn-sm.amber{background:var(--amber);color:var(--border);}
+.btn-sm.teal{background:var(--teal);color:var(--bg-light);}
+.btn-sm.teal:hover{background:var(--amber);color:var(--border);}
+
+.file-area{border:2px dashed var(--border);padding:18px;text-align:center;background:var(--bg-light);cursor:pointer;transition:all 0.12s;margin-bottom:10px;}
+.file-area:hover{border-color:var(--amber);background:var(--amber-pale);}
+.file-area input{display:none;}
+
+.footer{background:var(--border);color:var(--amber);text-align:center;padding:12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;border-top:4px solid var(--amber);position:relative;z-index:1;}
+.toast{position:fixed;bottom:24px;right:24px;z-index:200;padding:10px 18px;font-size:12px;font-weight:800;color:var(--border);border:3px solid var(--border);box-shadow:4px 4px 0 0 var(--border);background:var(--bg-card);animation:toastIn 0.4s ease-out;}
+.toast.success{border-color:var(--green);}
+.toast.error{border-color:var(--red);}
+.toast.info{border-color:var(--amber);}
+
+.tp-status-chip{display:inline-block;padding:3px 9px;border:2px solid var(--border);font-family:var(--mono);font-size:11px;font-weight:800;cursor:pointer;background:var(--bg-light);min-width:52px;text-align:center;}
+.tp-status-chip.s-on{background:var(--green);color:#fff;border-color:var(--green);}
+.tp-status-chip.s-standby{background:var(--mustard);color:#1a1612;border-color:var(--mustard);}
+.tp-status-chip.s-off{background:var(--warm-gray);color:#fff;border-color:var(--warm-gray);}
+.tp-status-menu{position:absolute;z-index:50;top:100%;left:0;margin-top:5px;background:var(--panel-bg);border:2px solid var(--amber);box-shadow:4px 4px 0 0 var(--border);min-width:86px;}
+.tp-status-opt{padding:7px 12px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--amber-pale);cursor:pointer;border-bottom:1px solid rgba(217,119,6,0.25);}
+.tp-status-opt:last-child{border-bottom:none;}
+.tp-status-opt:hover{background:rgba(217,119,6,0.18);color:#fff;}
+.tp-backdrop{position:fixed;inset:0;z-index:40;}
+
+.tp-item-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:2px solid var(--border);transition:background 0.12s;}
+.tp-item-row:last-child{border-bottom:none;}
+.tp-item-row:hover{background:var(--bg-light);}
+.tp-item-label{font-family:var(--display);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:1px;min-width:56px;text-align:right;}
+.tp-item-count{font-family:var(--display);font-size:22px;font-weight:900;color:var(--amber);min-width:48px;text-align:center;}
+.tp-item-breakdown{font-size:11px;color:var(--warm-gray);flex:1;min-width:0;}
+.tp-item-btn{display:flex;gap:4px;flex-shrink:0;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(13,10,8,0.75);z-index:150;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-card{background:var(--bg-card);border:3px solid var(--border);box-shadow:8px 8px 0 0 var(--amber);width:100%;max-width:720px;max-height:88vh;overflow-y:auto;animation:modalIn 0.2s ease-out;}
+.modal-card.wide{max-width:860px;}
+.modal-header{background:var(--amber);color:var(--border);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:1.5px;border-bottom:3px solid var(--border);}
+.modal-close{cursor:pointer;font-size:18px;font-weight:900;line-height:1;padding:0 4px;}
+.modal-body{padding:14px;}
+.modal-info-tip{font-size:11px;color:var(--warm-gray);padding:8px 14px;background:var(--bg-light);border-bottom:2px solid var(--border);}
+
+.modal-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:560px;}
+.modal-form-grid.col3{grid-template-columns:1fr 1fr 1fr;}
+.modal-form-grid.col4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.modal-form-grid.col2{grid-template-columns:1fr 1fr;}
+.modal-form-grid.col1{grid-template-columns:1fr;}
+
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.metric-card{background:var(--bg-light);border:2px solid var(--border);padding:10px 8px;text-align:center;}
+.metric-card .mc-num{font-family:var(--display);font-size:26px;font-weight:900;line-height:1.1;}
+.metric-card .mc-lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--warm-gray);margin-top:3px;}
+
+.pill-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+.pill-dot.d-green{background:var(--green);}
+.pill-dot.d-amber{background:var(--amber);}
+.pill-dot.d-mustard{background:var(--mustard);}
+.pill-dot.d-gray{background:var(--warm-gray);}
+.pill-dot.d-red{background:var(--red);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="topbar">
+    <div class="brand"><h1 id="heroTitle">乌波 <span style="color:var(--amber)">//</span> 极限挑战</h1><span class="sub">露水收集管理系统</span></div>
+    <div class="top-status"><span><span class="dot"></span>系统在线</span><span class="clock">{{ clock }}</span></div>
+  </div>
+
+  <div class="marquee-bar">
+    <span class="marquee-label">实时动态</span>
+    <div class="marquee-track" v-if="opsLog.length">
+      <span v-for="e in opsLog" class="mq-item" :class="{selected:selectedOpsId===e.id}" @click="selectOps(e)">
+        <span class="mq-time">{{ e.time }}</span>
+        <span class="mq-name">{{ e.msg }}</span>
+        <span v-if="selectedOpsId===e.id" class="mq-undo" @click.stop="undoEvent(e.id)">↩ 撤销</span>
+      </span>
+      <span v-for="e in opsLog" class="mq-item" :class="{selected:selectedOpsId===e.id}" @click="selectOps(e)">
+        <span class="mq-time">{{ e.time }}</span>
+        <span class="mq-name">{{ e.msg }}</span>
+      </span>
+    </div>
+    <span v-else class="mq-item" style="pointer-events:none;"><span class="mq-name" style="color:var(--warm-gray-light);">等待第一条事件...</span></span>
+  </div>
+
+  <div class="nav-bar">
+    <div v-for="t in tabs" :key="t.id" class="nav-tab" :class="{active:tab===t.id}" @click="switchTab(t.id)">{{ t.label }}</div>
+  </div>
+
+  <div class="main">
+
+    <!-- ====== 指挥台 ====== -->
+    <template v-if="tab==='dashboard'">
+      <div style="display:flex;gap:20px;">
+        <div style="width:300px;flex-shrink:0;">
+          <div class="panel">
+            <div class="panel-header"><span>任务倒计时</span><span class="tag">{{ st.status }}</span></div>
+            <div class="timer-block">
+              <div class="timer-display" :style="st.status==='进行中'&&st.remaining_seconds<300?'color:var(--red);text-shadow:4px 4px 0 var(--border)':''">
+                <template v-if="st.status==='未开始'">--:--</template>
+                <template v-else-if="st.status==='已结束'">00:00</template>
+                <template v-else><span>{{ minStr }}</span><span class="timer-colon">:</span><span>{{ secStr }}</span></template>
+              </div>
+              <div class="timer-status-line" :style="st.status==='已结束'?'color:var(--warm-gray)':st.status==='进行中'&&st.remaining_seconds<300?'color:var(--red)':''"><span class="dot" style="margin-right:6px;" v-if="st.active"></span>{{ st.active?'时钟运行中':st.status }}</div>
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <div class="stat-box sa"><div class="st-num" style="color:var(--green)">{{ st.dew_stats?.collected_value||0 }}</div><div class="st-lbl">已收集(滴)</div></div>
+            <div class="stat-box sd"><div class="st-num" style="color:var(--warm-gray)">{{ (st.dew_stats?.total_value||0)-(st.dew_stats?.collected_value||0) }}</div><div class="st-lbl">未收集(滴)</div></div>
+            <div class="stat-box sr"><div class="st-num" style="color:var(--amber)">{{ st.dew_pct||0 }}%</div><div class="st-lbl">进度</div></div>
+          </div>
+
+          <div class="controls" style="margin-top:14px;">
+            <button class="ctrl-btn" @click="startGame" v-if="!st.active">开始</button>
+            <div v-if="!st.active" class="dur-pills">
+              <span v-for="m in [30,60,90,120,150,180]" :key="m" :class="['dur-pill', gameMinutes===m?'active':'']" @click="gameMinutes=m">{{ m }}'</span>
+            </div>
+            <button class="ctrl-btn" v-if="st.status==='进行中'" @click="pauseGame">暂停</button>
+            <button class="ctrl-btn" v-if="st.status==='已暂停'" @click="resumeGame">继续</button>
+            <button class="ctrl-btn danger" v-if="st.active" @click="endGame">结束</button>
+          </div>
+
+          <div class="panel" style="margin-top:14px;">
+            <div class="panel-header"><span>狂欢模式</span><span class="tag" :style="{color:frenzyActive?'#dc2626':''}">{{ frenzyActive?'已激活':'未激活' }}</span></div>
+            <div class="panel-body" style="text-align:center;">
+              <button class="btn-sm" :class="{danger: frenzyActive}" @click="toggleFrenzy" style="width:100%;">{{ frenzyActive ? '关闭狂欢' : '开启狂欢（上帝时刻）' }}</button>
+              <div style="font-size:10px;color:var(--warm-gray);margin-top:6px;">{{ frenzyActive ? '淘汰冷却 40s · 线索已公示 · 冷却恢复20s' : '淘汰冷却 20s · 激活后线索公示、冷却延长至40s' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="flex:1;">
+          <div class="panel">
+            <div class="panel-header"><span>露水收集总进度</span><span class="tag">{{ st.dew_pct||0 }}%</span></div>
+            <div class="panel-body">
+              <div class="dew-progress">
+                <div class="dew-bar"><div class="dew-bar-fill" :style="{width:(st.dew_pct||0)+'%'}">{{ st.dew_pct||0 }}%</div></div>
+              </div>
+              <div class="dew-text">{{ st.dew_stats?.collected_value||0 }} / {{ st.dew_stats?.target||0 }} 滴 (共{{ st.dew_stats?.total_value||0 }}滴)</div>
+            </div>
+          </div>
+
+          <div class="terminal">
+            <div class="terminal-head"><span>系统日志 // 实时记录</span><span class="cls">● 记录中</span></div>
+            <div class="terminal-body">
+              <div class="tl">▸</div> <span class="tk">[就绪]</span> <span class="tv">乌波极限挑战系统运行中</span><br>
+              <div class="tl">▸</div> <span class="tk">露水</span>   <span class="tv">总{{ st.dew_stats?.total_value||0 }}滴 / 已收集{{ st.dew_stats?.collected_value||0 }}滴 / 目标{{ st.dew_stats?.target||0 }}滴</span><br>
+              <div class="tl">▸</div> <span class="tk">任务点</span> <span class="tv">{{ taskPoints.length }}个</span><br>
+              <div class="tl">▸</div> <span class="tk">金露水</span> <span class="tv">库存{{ st.golden_dew_stats?.available||0 }}/{{ st.golden_dew_stats?.total||0 }} 已用{{ st.golden_dew_stats?.used||0 }}</span><br>
+              <div class="tl">▸</div> <span class="tk">状态</span>   <span class="to">[正常]</span> <span class="tv">监听中...</span><span class="tcursor"></span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><span>玩家状态</span><span class="tag">{{ pstats.total||0 }} 人</span></div>
+            <div class="panel-body" style="padding:12px;">
+              <div class="stat-row" style="margin-top:0;">
+                <div class="stat-box sa" style="padding:10px 6px;"><div class="st-num" style="color:var(--green)">{{ pstats['存活']||0 }}</div><div class="st-lbl">存活</div></div>
+                <div class="stat-box sd" style="padding:10px 6px;"><div class="st-num" style="color:var(--red)">{{ pstats['淘汰']||0 }}</div><div class="st-lbl">淘汰</div></div>
+                <div class="stat-box sr" style="padding:10px 6px;"><div class="st-num" style="color:var(--mustard)">{{ pstats['复活']||0 }}</div><div class="st-lbl">复活</div></div>
+              </div>
+              <table class="rank-table" v-if="pstats.groups&&pstats.groups.length" style="margin-top:8px;">
+                <thead><tr><th>组号</th><th>存活</th><th>淘汰</th><th>复活</th><th>存活率</th></tr></thead>
+                <tbody>
+                  <tr v-for="g in pstats.groups" :key="g.group_num">
+                    <td>第 {{ g.group_num }} 组</td><td style="color:var(--green);font-weight:800;">{{ g.alive }}</td>
+                    <td style="color:var(--red);font-weight:800;">{{ g.dead }}</td><td style="color:var(--mustard);font-weight:800;">{{ g.revived }}</td>
+                    <td><span class="hp-outer" v-if="g.alive+g.dead+g.revived>0"><span :class="['hp-inner', (g.alive/(g.alive+g.dead+g.revived))<=0.5?'hp-critical':'']" :style="{width:((g.alive/(g.alive+g.dead+g.revived))*100)+'%'}"></span></span><span v-else style="color:var(--warm-gray);">—</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ====== 玩家 ====== -->
+    <template v-if="tab==='players'">
+      <div class="panel">
+        <div class="panel-header"><span>玩家管理</span><span class="tag">{{ pstats.total||0 }} 人</span><button class="btn-sm" style="margin-left:8px;" @click="openModal('playerForm',{})">＋ 新增玩家</button></div>
+        <div class="panel-body">
+          <div style="margin-bottom:14px;padding:10px 12px;background:var(--bg-light);border:2px solid var(--amber);display:flex;justify-content:space-between;align-items:center;box-shadow:3px 3px 0 0 var(--border);">
+            <span style="font-family:var(--display);font-size:11px;font-weight:900;letter-spacing:1.5px;color:var(--border);">金露水库存</span>
+            <span style="font-family:var(--mono);font-size:18px;font-weight:800;color:var(--amber);">
+              {{ st.golden_dew_stats?.available||0 }} / {{ st.golden_dew_stats?.total||0 }}
+              <span style="font-size:10px;color:var(--warm-gray);font-weight:700;">个（已用 {{ st.golden_dew_stats?.used||0 }}）</span>
+            </span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <input class="input-mono" v-model="playerSearch" placeholder="搜索姓名或组号..." style="flex:1;">
+            <select class="input-mono" v-model="playerStatusFilter"><option value="">全部状态</option><option value="存活">存活</option><option value="淘汰">淘汰</option><option value="复活">复活</option></select>
+          </div>
+          <table class="rank-table" v-if="filteredPlayers.length">
+            <thead><tr><th>组号</th><th>姓名</th><th>状态</th><th>淘汰时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="p in filteredPlayers" :key="p.id">
+                <td>{{ p.group_num }}</td><td style="font-family:var(--cn);font-weight:700;">{{ p.name }}</td>
+                <td :class="p.status==='存活'?'c-green':p.status==='淘汰'?'c-red':'c-amber'">{{ p.status }}</td>
+                <td>{{ p.eliminated_at||'—' }}</td>
+                <td>
+                  <button class="btn-sm" @click="openModal('playerForm',p)">编辑</button>
+                  <button v-if="p.status==='存活'" class="btn-sm danger" @click="elimPlayer(p)">淘汰</button>
+                  <template v-if="p.status==='淘汰'">
+                    <button class="btn-sm" @click="resetPlayer(p)">重置</button>
+                    <button class="btn-sm green" @click="revivePlayer(p)" :disabled="(st.golden_dew_stats?.available||0)<=0" :style="(st.golden_dew_stats?.available||0)<=0?{opacity:0.45,cursor:'not-allowed',boxShadow:'none'}:{}">复活</button>
+                  </template>
+                  <template v-if="p.status==='复活'">
+                    <button class="btn-sm" @click="resetPlayer(p)">重置</button>
+                    <button class="btn-sm danger" @click="elimPlayer(p)">淘汰</button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="padding:20px;text-align:center;color:var(--warm-gray);">暂无玩家</div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ====== 任务点（结构体卡片） ====== -->
+    <template v-if="tab==='taskpoints'">
+      <div class="panel" v-for="tp in taskPoints" :key="tp.id">
+        <div class="panel-header">
+          <span>任务点 {{ tp.id }} · {{ tp.name }}</span>
+          <span :class="['tp-status-chip', tp.status==='启用'?'s-on':tp.status==='备用'?'s-standby':'s-off']" @click.stop="statusMenuId=(statusMenuId===tp.id?null:tp.id)" style="cursor:pointer;">{{ tp.status }}</span>
+        </div>
+        <div v-if="statusMenuId===tp.id" class="tp-status-menu" style="position:absolute;z-index:50;top:38px;right:14px;">
+          <div class="tp-status-opt" :class="tp.status==='启用'?'active':''" @click="switchTPStatus(tp.id,'启用')">启用</div>
+          <div class="tp-status-opt" :class="tp.status==='备用'?'active':''" @click="switchTPStatus(tp.id,'备用')">备用</div>
+          <div class="tp-status-opt" :class="tp.status==='禁用'?'active':''" @click="switchTPStatus(tp.id,'禁用')">禁用</div>
+        </div>
+        <div style="padding:7px 14px;font-size:11px;color:var(--warm-gray);font-weight:700;border-bottom:2px solid var(--border);">类型 {{ tpTypeLabel(tp.tp_type) }} · 自带卡 {{ tp.card_name||'无' }}</div>
+
+        <div class="tp-item-row">
+          <span class="tp-item-label">线索</span>
+          <span class="tp-item-count">{{ tpStats(tp.id).clue.total }}</span>
+          <span class="tp-item-breakdown">条 · <span class="pill-dot d-gray"></span>未收集 {{ tpStats(tp.id).clue.raw }} <span class="pill-dot d-amber"></span>已发现 {{ tpStats(tp.id).clue.revealed }} <span class="pill-dot d-green"></span>已收集 {{ tpStats(tp.id).clue.collected }}</span>
+          <div class="tp-item-btn"><button class="btn-sm" @click="openModal('clueManage',tp)">管理</button></div>
+        </div>
+        <div class="tp-item-row">
+          <span class="tp-item-label">金露水</span>
+          <span class="tp-item-count">{{ tpStats(tp.id).gd.total }}</span>
+          <span class="tp-item-breakdown">个 · <span class="pill-dot d-gray"></span>未收集 {{ tpStats(tp.id).gd.raw }} <span class="pill-dot d-green"></span>已收集 {{ tpStats(tp.id).gd.collected }} <span class="pill-dot d-mustard"></span>已用 {{ tpStats(tp.id).gd.used }}</span>
+          <div class="tp-item-btn"><button class="btn-sm" @click="openModal('gdManage',tp)">管理</button></div>
+        </div>
+        <div class="tp-item-row">
+          <span class="tp-item-label">露水</span>
+          <span class="tp-item-count">{{ tpStats(tp.id).dew.total }}</span>
+          <span class="tp-item-breakdown">滴 · <span class="pill-dot d-gray"></span>未收集 {{ tpStats(tp.id).dew.raw }} <span class="pill-dot d-amber"></span>已发现 {{ tpStats(tp.id).dew.revealed }} <span class="pill-dot d-green"></span>已收集 {{ tpStats(tp.id).dew.collected }}</span>
+          <div class="tp-item-btn"><button class="btn-sm" @click="openModal('dewManage',tp)">管理</button></div>
+        </div>
+        <div class="tp-item-row">
+          <span class="tp-item-label">静止卡</span>
+          <span class="tp-item-count">{{ tp.static_card_count||0 }}</span>
+          <span class="tp-item-breakdown">张 · 总数 {{ tp.static_card_count||0 }} · 已送 {{ tp.static_card_collected||0 }} · 剩余 {{ (tp.static_card_count||0)-(tp.static_card_collected||0) }}</span>
+          <div class="tp-item-btn">
+            <button class="btn-sm" @click="adjCard(tp,'static_card_count',-1)">－</button>
+            <button class="btn-sm" @click="adjCard(tp,'static_card_count',1)">＋</button>
+          </div>
+        </div>
+        <div class="tp-item-row">
+          <span class="tp-item-label">护盾卡</span>
+          <span class="tp-item-count">{{ tp.shield_card_count||0 }}</span>
+          <span class="tp-item-breakdown">张 · 总数 {{ tp.shield_card_count||0 }} · 已送 {{ tp.shield_card_collected||0 }} · 剩余 {{ (tp.shield_card_count||0)-(tp.shield_card_collected||0) }}</span>
+          <div class="tp-item-btn">
+            <button class="btn-sm" @click="adjCard(tp,'shield_card_count',-1)">－</button>
+            <button class="btn-sm" @click="adjCard(tp,'shield_card_count',1)">＋</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;padding:10px 14px;flex-wrap:wrap;">
+          <button class="btn-sm amber" @click="openModal('tpComplete',tp)">送出道具</button>
+          <button class="btn-sm teal" @click="openModal('tpReceive',tp)">接收物资</button>
+          <button class="btn-sm" @click="openModal('inventory',tp)">库存流水</button>
+          <button class="btn-sm" @click="openModal('tpForm',tp)">编辑</button>
+          <button class="btn-sm danger" @click="deleteTP(tp.id)">删除</button>
+        </div>
+      </div>
+      <div v-if="!taskPoints.length" style="padding:30px;text-align:center;color:var(--warm-gray);">暂无任务点，请通过 Excel 导入或在设置页配置</div>
+      <button class="btn-sm amber" style="margin-top:12px;" @click="openModal('tpForm',{})">＋ 新增任务点</button>
+      <div v-if="statusMenuId!==null" class="tp-backdrop" @click="statusMenuId=null"></div>
+    </template>
+
+    <!-- ====== 猎人（结构体卡片） ====== -->
+    <template v-if="tab==='hunters'">
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
+        <input class="input-mono" v-model="newHunterName" placeholder="输入猎人姓名（如 示例姓名）" style="flex:1;max-width:240px;">
+        <button class="btn-sm amber" @click="addHunter">＋ 新增猎人</button>
+        <span style="font-size:11px;color:var(--warm-gray);">猎人按名字标识（无QQ名单）；分配线索后自动出现在列表，删除即解除其名下线索归属</span>
+      </div>
+      <div class="panel" v-for="h in hunters" :key="h">
+        <div class="panel-header">
+          <span>猎人 · {{ h }}</span>
+          <span class="tag">线索 {{ hunterStats(h).clue.total }} · 露水 {{ hunterStats(h).dew.total }}滴</span>
+        </div>
+        <div style="padding:7px 14px;font-size:11px;color:var(--warm-gray);font-weight:700;border-bottom:2px solid var(--border);">携带物（管理员网页手动管理，与游戏指令无关）</div>
+        <div class="tp-item-row">
+          <span class="tp-item-label">线索</span>
+          <span class="tp-item-count">{{ hunterStats(h).clue.total }}</span>
+          <span class="tp-item-breakdown">条 · <span class="pill-dot d-gray"></span>未收集 {{ hunterStats(h).clue.raw }} <span class="pill-dot d-amber"></span>已发现 {{ hunterStats(h).clue.revealed }} <span class="pill-dot d-green"></span>已收集 {{ hunterStats(h).clue.collected }}</span>
+          <div class="tp-item-btn"><button class="btn-sm" @click="openModal('hunterManage',{name:h})">管理</button></div>
+        </div>
+        <div class="tp-item-row">
+          <span class="tp-item-label">露水</span>
+          <span class="tp-item-count">{{ hunterStats(h).dew.total }}</span>
+          <span class="tp-item-breakdown">滴 · <span class="pill-dot d-gray"></span>未收集 {{ hunterStats(h).dew.raw }} <span class="pill-dot d-amber"></span>已发现 {{ hunterStats(h).dew.revealed }} <span class="pill-dot d-green"></span>已收集 {{ hunterStats(h).dew.collected }}</span>
+          <div class="tp-item-btn"><button class="btn-sm" @click="openModal('hunterManage',{name:h})">管理</button></div>
+        </div>
+        <div style="display:flex;gap:8px;padding:10px 14px;flex-wrap:wrap;">
+          <button class="btn-sm" @click="openModal('hunterManage',{name:h})">管理持有物</button>
+          <button class="btn-sm danger" @click="removeHunter(h)">删除猎人</button>
+        </div>
+      </div>
+      <div v-if="!hunters.length" style="padding:30px;text-align:center;color:var(--warm-gray);">暂无猎人持有物。在「线索管理」中将线索分配给猎人，或输入猎人名新增。</div>
+    </template>
+
+    <!-- ====== 线索 ====== -->
+    <template v-if="tab==='clues'">
+      <div class="panel">
+        <div class="panel-header"><span>线索管理</span><span class="tag">{{ clues.length }} 条</span></div>
+        <div class="panel-body">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+            <input class="input-mono" v-model="clueSearch" placeholder="搜索编号 / 内容" style="flex:1;min-width:200px;">
+            <select class="input-mono" v-model="clueTypeFilter"><option value="">全部类型</option><option value="真">真线索</option><option value="假">假线索</option></select>
+            <select class="input-mono" v-model="clueStatusFilter"><option value="">全部状态</option><option value="未收集">未收集</option><option value="已发现未收集">已发现未收集</option><option value="已收集未发现">已收集未发现</option><option value="已收集已发现">已收集已发现</option></select>
+            <select class="input-mono" v-model="clueTPFilter"><option value="">全部任务点</option><option v-for="tp in taskPoints" :key="tp.id" :value="tp.id">{{ tp.id }}. {{ tp.name }}</option></select>
+          </div>
+          <button class="btn-sm" style="margin-bottom:10px;" @click="openModal('clueForm',{})">＋ 新增线索</button>
+          <table class="rank-table" v-if="filteredClues.length">
+            <thead><tr><th style="width:50px;">编号</th><th style="width:50px;">类型</th><th style="width:140px;">所属任务点</th><th>内容</th><th style="width:90px;">藏匿NPC</th><th style="width:100px;">状态</th><th style="width:230px;">操作</th></tr></thead>
+            <tbody>
+              <tr v-for="c in filteredClues" :key="c.id">
+                <td>{{ c.id }}</td>
+                <td><span class="tag" :style="c.clue_type==='真'?'color:var(--amber);':'color:var(--warm-gray);'">{{ c.clue_type }}</span></td>
+                <td>{{ tpName(c.task_point_id) }}</td>
+                <td style="max-width:280px;word-break:break-all;">{{ c.content || '—' }}</td>
+                <td>{{ c.hidden_npc_name || '—' }}</td>
+                <td><span :class="clueStatusChip(c.status)">{{ c.status }}</span></td>
+                <td>
+                  <button class="btn-sm" v-if="c.status!=='已收集已发现'" @click="collectClue(c.id)">标记</button>
+                  <button class="btn-sm" v-if="c.status!=='未收集'" @click="resetClue(c.id)">重置</button>
+                  <button class="btn-sm" @click="openModal('clueForm',c)">编辑</button>
+                  <button class="btn-sm danger" @click="deleteClue(c.id)">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="padding:20px;text-align:center;color:var(--warm-gray);">暂无匹配线索</div>
+          <div style="margin-top:18px;border-top:2px solid var(--border);padding-top:12px;">
+            <div style="font-size:12px;font-weight:800;color:var(--amber);margin-bottom:8px;">无主线索（既不属于任务点也不属于猎人）</div>
+            <table class="rank-table" v-if="orphanClues.length">
+              <thead><tr><th style="width:50px;">编号</th><th style="width:50px;">类型</th><th>内容</th><th style="width:90px;">藏匿NPC</th><th style="width:100px;">状态</th><th style="width:340px;">归属操作</th></tr></thead>
+              <tbody>
+                <tr v-for="c in orphanClues" :key="c.id">
+                  <td>{{ c.id }}</td>
+                  <td><span class="tag" :style="c.clue_type==='真'?'color:var(--amber);':'color:var(--warm-gray);'">{{ c.clue_type }}</span></td>
+                  <td style="max-width:240px;word-break:break-all;">{{ c.content||'—' }}</td>
+                  <td>{{ c.hidden_npc_name||'—' }}</td>
+                  <td><span :class="clueStatusChip(c.status)">{{ c.status }}</span></td>
+                  <td>
+                    <select class="input-mono" v-model="c._assignTP" style="width:100px;display:inline-block;">
+                      <option :value="0">→任务点</option>
+                      <option v-for="tp in taskPoints" :key="tp.id" :value="tp.id">{{ tp.id }}.{{ tp.name }}</option>
+                    </select>
+                    <button class="btn-sm" @click="assignOrphanToTP(c)">分配</button>
+                    <button class="btn-sm amber" @click="openModal('clueForm',c)">编辑</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-else style="padding:12px;text-align:center;color:var(--warm-gray);font-size:11px;">当前没有无主线索</div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ====== 露水（独立页） ====== -->
+    <template v-if="tab==='dews'">
+      <div class="metric-row">
+        <div class="metric-card"><div class="mc-num" style="color:var(--border);">{{ dewAllStats.total }}</div><div class="mc-lbl">总数(滴)</div></div>
+        <div class="metric-card"><div class="mc-num" style="color:var(--green);">{{ dewAllStats.collected }}</div><div class="mc-lbl">已收集</div></div>
+        <div class="metric-card"><div class="mc-num" style="color:var(--amber);">{{ dewAllStats.revealed }}</div><div class="mc-lbl">已发现</div></div>
+        <div class="metric-card"><div class="mc-num" style="color:var(--warm-gray);">{{ dewAllStats.raw }}</div><div class="mc-lbl">未收集</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span>露水管理</span><span class="tag">{{ dews.length }} 个</span></div>
+        <div class="panel-body">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding:8px 10px;background:var(--bg-light);border:2px solid var(--amber);">
+            <span style="font-size:11px;font-weight:800;">目标量</span>
+            <input class="input-mono" v-model.number="dewTargetInput" type="number" style="width:80px;">
+            <button class="btn-sm" @click="saveDewTarget">保存</button>
+            <span style="font-size:10px;color:var(--warm-gray);">0 = 默认80滴</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <input class="input-mono" v-model="dewSearch" placeholder="搜索露水编号..." style="flex:1;">
+            <select class="input-mono" v-model="dewFilter"><option value="">全部</option><option value="未收集">未收集</option><option value="已发现未收集">已发现未收集</option><option value="已收集">已收集</option></select>
+          </div>
+          <button class="btn-sm" style="margin-bottom:10px;" @click="openModal('dewForm',{})">＋ 新增露水</button>
+          <table class="rank-table" v-if="filteredDews.length">
+            <thead><tr><th>编号</th><th>露水值</th><th>状态</th><th>关联任务点(真线索)</th><th>收集时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="d in filteredDews" :key="d.id">
+                <td>露水 {{ d.id }}</td>
+                <td>{{ d.dew_value||2 }}滴</td>
+                <td :class="d.status==='已收集'?'c-green':d.status==='已发现未收集'?'c-amber':'c-gray'">{{ d.status }}<span v-if="d.hunter_name" style="margin-left:4px;font-size:10px;color:#1aa3a3;">·猎人{{ d.hunter_name }}持有</span></td>
+                <td>{{ getDewTpName(d.id) }}</td>
+                <td>{{ d.collected_at||'—' }}</td>
+                <td>
+                  <button v-if="d.status==='已发现未收集'" class="btn-sm green" @click="collectDew(d.id)">收集</button>
+                  <button v-if="d.status==='已收集'" class="btn-sm" @click="resetDew(d.id)">重置</button>
+                  <button class="btn-sm" @click="openModal('dewForm',d)">编辑</button>
+                  <button class="btn-sm danger" @click="deleteDew(d.id)">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-if="!filteredDews.length" style="padding:20px;text-align:center;color:var(--warm-gray);">暂无匹配的露水</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-header"><span>金露水收集</span><span class="tag">{{ goldenDews.length }} 个</span><button class="btn-sm" style="margin-left:8px;" @click="openModal('gdForm',{})">＋ 新增</button></div>
+        <div class="panel-body">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:8px 12px;background:var(--bg-light);border:2px solid var(--amber);">
+            <span style="font-family:var(--display);font-size:11px;font-weight:900;">库存</span>
+            <span style="font-family:var(--mono);font-size:16px;font-weight:800;color:var(--amber);">{{ st.golden_dew_stats?.available||0 }}/{{ st.golden_dew_stats?.total||0 }}</span>
+            <span style="font-size:10px;color:var(--warm-gray);">已用 {{ st.golden_dew_stats?.used||0 }}</span>
+          </div>
+          <table class="rank-table" v-if="goldenDews.length">
+            <thead><tr><th>编号</th><th>关联任务点</th><th>状态</th><th>收集时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="d in goldenDews" :key="d.id">
+                <td>金露水 {{ d.id }}</td>
+                <td>任务点 {{ d.task_point_id }}</td>
+                <td :class="d.status==='已收集'?'c-green':d.status==='已使用'?'c-amber':'c-gray'">{{ d.status }}</td>
+                <td>{{ d.collected_at||'—' }}</td>
+                <td>
+                  <button v-if="d.status==='未收集'" class="btn-sm amber" @click="collectGoldenDew(d.id)">标记收集</button>
+                  <template v-if="d.status==='已收集'"><span style="color:var(--green);font-weight:800;">库存中</span><button class="btn-sm" @click="resetGoldenDew(d.id)" style="margin-left:4px;">重置</button></template>
+                  <span v-if="d.status==='已使用'" style="color:var(--warm-gray);">已消耗</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-if="!goldenDews.length" style="padding:20px;text-align:center;color:var(--warm-gray);">暂无金露水</div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ====== 设置 ====== -->
+    <template v-if="tab==='settings'">
+      <div class="panel">
+        <div class="panel-header"><span>导入数据</span><span class="tag">.xlsx</span></div>
+        <div class="panel-body">
+          <div class="file-area" @click="$refs.fi.click()">
+            <input type="file" ref="fi" accept=".xlsx" @change="onFile">
+            <div style="font-size:12px;color:var(--warm-gray);">{{ importFile?.name||'点击选择 Excel (6张表)' }}</div>
+          </div>
+          <button class="btn-sm" v-if="importFile" @click="doImport" :disabled="importing">{{ importing?'导入中...':'确认导入' }}</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-header"><span>群号配置</span></div>
+        <div class="panel-body">
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-weight:800;font-size:12px;min-width:80px;">游戏群</span><input class="input-mono" v-model="cfgForm.game_group" style="flex:1;"></div>
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-weight:800;font-size:12px;min-width:80px;">工作群</span><input class="input-mono" v-model="cfgForm.work_group" style="flex:1;"></div>
+            <div style="display:flex;align-items:center;gap:10px;"><span style="font-weight:800;font-size:12px;min-width:80px;">后台群</span><input class="input-mono" v-model="cfgForm.backend_group" style="flex:1;"></div>
+          </div>
+          <button class="btn-sm" @click="saveConfig">保存</button>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-header"><span>数据管理</span></div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button class="btn-sm" @click="exportJSON">导出 JSON</button>
+            <button class="btn-sm" @click="exportCSV">导出 CSV</button>
+          </div>
+          <div style="margin-top:14px;padding:12px;border:1px solid var(--danger,#ff4d4f);border-radius:8px;background:rgba(255,77,79,0.06);">
+            <div style="font-size:12px;font-weight:800;color:var(--danger,#ff4d4f);margin-bottom:6px;">危险区 · 清空所有数据</div>
+            <div style="font-size:10px;color:var(--warm-gray);margin-bottom:8px;">将删除玩家/任务点/线索/露水/金露水/NPC/操作日志，并重置游戏状态。此操作不可撤销。</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input class="input-mono" v-model="clearConfirmText" placeholder="输入「清空」以解锁" style="flex:1;min-width:0;">
+              <button class="btn-sm danger" :disabled="clearConfirmText!=='清空'" @click="clearAllData" :style="clearConfirmText!=='清空'?{opacity:0.45,cursor:'not-allowed',boxShadow:'none'}:{}">清空所有数据</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px;">
+        <div class="panel-header"><span>工作人员名册（NPC）</span><span class="tag">只读</span></div>
+        <div class="panel-body">
+          <table class="rank-table" v-if="npcs.length">
+            <thead><tr><th>QQ</th><th>姓名</th><th>角色</th><th>关联任务点</th></tr></thead>
+            <tbody>
+              <tr v-for="n in npcs" :key="n.qq"><td>{{ n.qq }}</td><td style="font-family:var(--cn);">{{ n.name }}</td><td>{{ n.role||'—' }}</td><td>{{ n.task_point_ids||'—' }}</td></tr>
+            </tbody>
+          </table>
+          <div v-else style="padding:20px;text-align:center;color:var(--warm-gray);">暂无 NPC 记录（通过 Excel 导入写入）</div>
+        </div>
+      </div>
+    </template>
+
+  </div>
+
+  <!-- ====== 通用模态框 ====== -->
+  <div class="modal-overlay" v-if="modal.show" @click.self="closeModal">
+    <div class="modal-card" :class="{wide: modal.wide}">
+      <div class="modal-header"><span>{{ modal.title }}</span><span class="modal-close" @click="closeModal">x</span></div>
+
+      <div class="modal-info-tip" v-if="modal.tip"><p>{{ modal.tip }}</p></div>
+
+      <div class="modal-body">
+        <!-- 通用实体表单：玩家/任务点/线索/露水/金露水 -->
+        <template v-if="modal.type==='playerForm'">
+          <div class="modal-form-grid col3" style="max-width:560px;">
+            <div><label style="font-size:11px;color:var(--warm-gray);">组号</label><input class="input-mono" v-model.number="edPlayer.group_num" placeholder="组号" type="number"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">姓名</label><input class="input-mono" v-model="edPlayer.name" placeholder="玩家姓名"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">备注</label><input class="input-mono" v-model="edPlayer.note" placeholder="备注(可选)"></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn-sm" @click="savePlayer">{{ edPlayer.id?'保存修改':'新增玩家' }}</button>
+            <button class="btn-sm danger" v-if="edPlayer.id" @click="deletePlayer(edPlayer.id)">删除</button>
+          </div>
+        </template>
+
+        <template v-if="modal.type==='tpForm'">
+          <div class="modal-form-grid col2">
+            <div><label style="font-size:11px;color:var(--warm-gray);">编号</label><input class="input-mono" v-model.number="edTP.id" type="number" placeholder="编号"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">名称</label><input class="input-mono" v-model="edTP.name" placeholder="任务点名称"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">类型</label><select class="input-mono" v-model="edTP.tp_type"><option value="solo">单独任务</option><option value="team_coop">组间合作</option><option value="team_vs">组间对抗</option></select></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">功能卡</label><select class="input-mono" v-model="edTP.card_name"><option value="无">无</option><option value="静止卡">静止卡</option><option value="护盾卡">护盾卡</option></select></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">金露水数</label><input class="input-mono" v-model.number="edTP.golden_dew_count" type="number"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">静止卡数</label><input class="input-mono" v-model.number="edTP.static_card_count" type="number"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">护盾卡数</label><input class="input-mono" v-model.number="edTP.shield_card_count" type="number"></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn-sm" @click="saveTP">{{ edTP.origId?'保存修改':'新增任务点' }}</button>
+            <button class="btn-sm danger" v-if="edTP.origId" @click="deleteTP(edTP.origId)">删除</button>
+          </div>
+        </template>
+
+        <template v-if="modal.type==='clueForm'">
+          <div class="modal-form-grid col2">
+            <div><label style="font-size:11px;color:var(--warm-gray);">编号</label><input class="input-mono" v-model.number="edClue.id" type="number" placeholder="线索编号" :disabled="!!edClue.origId"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">类型</label><select class="input-mono" v-model="edClue.clue_type"><option value="真">真线索</option><option value="假">假线索</option></select></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">所属任务点</label><select class="input-mono" v-model.number="edClue.task_point_id" :disabled="!!edClue.hunter_name" @change="edClue.hunter_name=null"><option :value="0">— 无 —</option><option v-for="tp in taskPoints" :key="tp.id" :value="tp.id">{{ tp.id }}. {{ tp.name }}</option></select></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">藏匿NPC姓名</label><input class="input-mono" v-model="edClue.hidden_npc_name" placeholder="留空表示无"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">归属猎人</label><input class="input-mono" v-model="edClue.hunter_name" :disabled="!!edClue.task_point_id" @input="edClue.task_point_id=0" placeholder="填猎人名→归该猎人(与任务点二选一)"></div>
+            <div style="grid-column:1/-1;font-size:10px;color:var(--warm-gray);">归属规则：填写「归属猎人」将自动清空任务点（猎人持有物）；选中任务点则禁用猎人字段。两者互斥。</div>
+            <div style="grid-column:1/-1;"><label style="font-size:11px;color:var(--warm-gray);">线索内容</label><textarea class="input-mono" v-model="edClue.content" rows="3" placeholder="线索内容描述" style="width:100%;"></textarea></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn-sm" @click="saveClue">{{ edClue.origId?'保存修改':'新增线索' }}</button>
+            <button class="btn-sm danger" v-if="edClue.origId" @click="deleteClue(edClue.origId)">删除</button>
+          </div>
+        </template>
+
+        <!-- 猎人持有物管理弹窗 -->
+        <template v-if="modal.type==='hunterManage'">
+          <div style="font-size:12px;font-weight:800;color:var(--amber);margin-bottom:8px;">持有线索（{{ hunterItems.clues.length }}）</div>
+          <table class="rank-table" v-if="hunterItems.clues.length">
+            <thead><tr><th>编号</th><th>类型</th><th>内容</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="c in hunterItems.clues" :key="c.id">
+                <td>{{ c.id }}</td>
+                <td><span :style="c.clue_type==='真'?'color:var(--amber);font-weight:800;':'color:var(--warm-gray);'">{{ c.clue_type }}</span></td>
+                <td style="max-width:240px;word-break:break-all;">{{ c.content||'—' }}</td>
+                <td><span :class="clueStatusChip(c.status)">{{ c.status }}</span></td>
+                <td>
+                  <button class="btn-sm" v-if="c.status!=='已收集已发现'" @click="collectClue(c.id)">标记</button>
+                  <button class="btn-sm" v-if="c.status!=='未收集'" @click="resetClue(c.id)">重置</button>
+                  <button class="btn-sm danger" @click="unassignClueFromHunter(c.id)">解除归属</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="font-size:11px;color:var(--warm-gray);padding:6px 0;">该猎人暂无线索</div>
+          <div style="font-size:12px;font-weight:800;color:var(--amber);margin:14px 0 6px;">持有露水（{{ hunterItems.dews.length }}）</div>
+          <table class="rank-table" v-if="hunterItems.dews.length">
+            <thead><tr><th>编号</th><th>露水值</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="d in hunterItems.dews" :key="d.id">
+                <td>{{ d.id }}</td>
+                <td>{{ d.dew_value||2 }} 滴</td>
+                <td><span :class="clueStatusChip(d.status)">{{ d.status }}</span></td>
+                <td>
+                  <button class="btn-sm" v-if="d.status!=='已收集'" @click="collectDew(d.id)">收集</button>
+                  <button class="btn-sm" v-if="d.status!=='未收集'" @click="resetDew(d.id)">重置</button>
+                  <button class="btn-sm danger" @click="deleteHunterDew(d.id)">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="font-size:11px;color:var(--warm-gray);padding:6px 0;">该猎人暂无露水</div>
+          <div style="font-size:12px;font-weight:800;color:var(--amber);margin:14px 0 6px;">新建露水给该猎人</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="input-mono" v-model.number="newDewId" type="number" placeholder="编号" style="width:90px;">
+            <input class="input-mono" v-model.number="newDewVal" type="number" placeholder="滴数" style="width:80px;">
+            <button class="btn-sm amber" @click="addHunterDew">新建</button>
+          </div>
+          <div style="font-size:12px;font-weight:800;color:var(--amber);margin:14px 0 6px;">新建线索给该猎人</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input class="input-mono" v-model.number="newClueId" type="number" placeholder="编号" style="width:70px;">
+            <select class="input-mono" v-model="newClueType"><option value="真">真</option><option value="假">假</option></select>
+            <input class="input-mono" v-model="newClueContent" placeholder="内容(可选)" style="flex:1;min-width:120px;">
+            <button class="btn-sm amber" @click="addHunterClue">新建</button>
+          </div>
+          <div style="font-size:12px;font-weight:800;color:var(--amber);margin:14px 0 6px;">分配线索给该猎人</div>
+          <div style="display:flex;gap:8px;">
+            <select class="input-mono" v-model="assignClueId" style="flex:1;">
+              <option :value="0">选一条未归属猎人的线索…</option>
+              <option v-for="c in unassignedClues" :key="c.id" :value="c.id">#{{ c.id }} ({{ c.clue_type }}) {{ c.content||'' }}</option>
+            </select>
+            <button class="btn-sm amber" @click="assignSelectedClue">分配</button>
+          </div>
+        </template>
+
+        <template v-if="modal.type==='dewForm'">
+          <div class="modal-form-grid col3">
+            <div><label style="font-size:11px;color:var(--warm-gray);">编号</label><input class="input-mono" v-model.number="edDew.id" type="number" :disabled="!!edDew.origId"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">露水值(滴)</label><input class="input-mono" v-model.number="edDew.dew_value" type="number"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">状态</label><select class="input-mono" v-model="edDew.status"><option value="未收集">未收集</option><option value="已发现未收集">已发现未收集</option><option value="已收集">已收集</option></select></div>
+            <div style="grid-column:1/-1;"><label style="font-size:11px;color:var(--warm-gray);">归属池</label>
+              <select class="input-mono" v-model="edDew.pool" @change="onDewPoolChange" style="margin-top:4px;">
+                <option value="tp">任务点池（按编号配对同编号真线索，归属其任务点）</option>
+                <option value="hunter">猎人池（独立记录，不依赖线索）</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1;" v-if="edDew.pool==='hunter'"><label style="font-size:11px;color:var(--warm-gray);">归属猎人</label><input class="input-mono" v-model="edDew.hunter_name" placeholder="猎人姓名"></div>
+          </div>
+          <div style="margin-top:10px;padding:8px 10px;background:rgba(255,255,255,0.04);border-left:3px solid var(--amber);font-size:11px;color:var(--warm-gray);border-radius:4px;">{{ dewPairingInfo }}</div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn-sm" @click="saveDew">{{ edDew.origId?'保存修改':'新增露水' }}</button>
+            <button class="btn-sm danger" v-if="edDew.origId" @click="deleteDew(edDew.origId)">删除</button>
+          </div>
+        </template>
+
+        <template v-if="modal.type==='gdForm'">
+          <div class="modal-form-grid col2">
+            <div><label style="font-size:11px;color:var(--warm-gray);">编号</label><input class="input-mono" v-model.number="edGD.id" type="number" :disabled="!!edGD.origId"></div>
+            <div><label style="font-size:11px;color:var(--warm-gray);">关联任务点</label><select class="input-mono" v-model.number="edGD.task_point_id"><option v-for="tp in taskPoints" :key="tp.id" :value="tp.id">{{ tp.id }}. {{ tp.name }}</option></select></div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px;">
+            <button class="btn-sm" @click="saveGD">{{ edGD.origId?'保存修改':'新增金露水' }}</button>
+            <button class="btn-sm danger" v-if="edGD.origId" @click="deleteGD(edGD.origId)">删除</button>
+          </div>
+        </template>
+
+        <!-- 任务点道具管理弹窗：线索 -->
+        <template v-if="modal.type==='clueManage'">
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+            <button class="btn-sm" @click="openModal('clueForm',{})">＋ 新增线索</button>
+            <span style="font-size:11px;color:var(--warm-gray);margin-left:auto;">共 {{ tpFilteredClues.length }} 条</span>
+          </div>
+          <table class="rank-table" v-if="tpFilteredClues.length">
+            <thead><tr><th>编号</th><th>类型</th><th>内容</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="c in tpFilteredClues" :key="c.id">
+                <td>{{ c.id }}</td><td><span :style="c.clue_type==='真'?'color:var(--amber);font-weight:800;':'color:var(--warm-gray);'">{{ c.clue_type }}</span></td>
+                <td style="max-width:280px;word-break:break-all;">{{ c.content||'—' }}</td>
+                <td><span :class="clueStatusChip(c.status)">{{ c.status }}</span></td>
+                <td>
+                  <button class="btn-sm" v-if="c.status!=='已收集已发现'" @click="collectClue(c.id)">标记</button>
+                  <button class="btn-sm" v-if="c.status!=='未收集'" @click="resetClue(c.id)">重置</button>
+                  <button class="btn-sm" @click="openModal('clueForm',c)">编辑</button>
+                  <button class="btn-sm danger" @click="deleteClue(c.id)">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="padding:12px;text-align:center;color:var(--warm-gray);">该任务点暂无线索</div>
+        </template>
+
+        <!-- 任务点道具管理弹窗：金露水 -->
+        <template v-if="modal.type==='gdManage'">
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+            <button class="btn-sm" @click="openModal('gdForm',{})">＋ 新增金露水</button>
+            <span style="font-size:11px;color:var(--warm-gray);margin-left:auto;">共 {{ tpFilteredGD.length }} 个</span>
+          </div>
+          <table class="rank-table" v-if="tpFilteredGD.length">
+            <thead><tr><th>编号</th><th>状态</th><th>收集时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="d in tpFilteredGD" :key="d.id">
+                <td>金露水 {{ d.id }}</td>
+                <td :class="d.status==='已收集'?'c-green':d.status==='已使用'?'c-amber':'c-gray'">{{ d.status }}</td>
+                <td>{{ d.collected_at||'—' }}</td>
+                <td>
+                  <button v-if="d.status==='未收集'" class="btn-sm amber" @click="collectGoldenDew(d.id)">标记收集</button>
+                  <span v-if="d.status==='已收集'"><span style="color:var(--green);font-weight:800;">库存</span> <button class="btn-sm" @click="resetGoldenDew(d.id)">重置</button></span>
+                  <span v-if="d.status==='已使用'" style="color:var(--warm-gray);">已消耗</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="padding:12px;text-align:center;color:var(--warm-gray);">该任务点暂无金露水</div>
+        </template>
+
+        <!-- 任务点道具管理弹窗：露水（真线索join过滤） -->
+        <template v-if="modal.type==='dewManage'">
+          <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center;">
+            <button class="btn-sm" @click="openModal('dewForm',{tpId:modal.data.id})">＋ 新增露水</button>
+            <span style="font-size:11px;color:var(--warm-gray);margin-left:auto;">共 {{ tpFilteredDews.length }} 个 · 合计 {{ tpDewTotal }} 滴</span>
+            <span v-if="tpFilteredDews.some(d=>d.hunter_name)" style="font-size:10px;color:#1aa3a3;width:100%;">⚠ 含猎人持有露水（双关联）：其滴数同时计入对应猎人卡片，请勿与猎人卡片相加重复统计</span>
+          </div>
+          <table class="rank-table" v-if="tpFilteredDews.length">
+            <thead><tr><th>编号</th><th>露水值</th><th>对应真线索</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr v-for="d in tpFilteredDews" :key="d.id">
+                <td>{{ d.id }}</td><td>{{ d.dew_value||2 }}滴</td>
+                <td style="color:var(--warm-gray);font-size:11px;">{{ getClueContent(d.id)||'—' }}</td>
+                <td :class="d.status==='已收集'?'c-green':d.status==='已发现未收集'?'c-amber':'c-gray'">{{ d.status }}<span v-if="d.hunter_name" style="margin-left:4px;font-size:10px;color:#1aa3a3;">·猎人{{ d.hunter_name }}持有</span></td>
+                <td>
+                  <button v-if="d.status==='已发现未收集'" class="btn-sm green" @click="collectDew(d.id)">收集</button>
+                  <button v-if="d.status==='已收集'" class="btn-sm" @click="resetDew(d.id)">重置</button>
+                  <button class="btn-sm" @click="openModal('dewForm',d)">编辑</button>
+                  <button class="btn-sm danger" @click="deleteDew(d.id)">删除</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="padding:12px;text-align:center;color:var(--warm-gray);">该任务点暂无露水</div>
+          <div style="margin-top:8px;font-size:10px;color:var(--warm-gray);">露水通过同编号真线索关联本任务点 · 新增露水：先在「线索管理」新建真线索（同编号归属本任务点），再在此新增同编号露水</div>
+        </template>
+
+        <!-- 任务点库存流水 -->
+        <template v-if="modal.type==='inventory'">
+          <div style="margin-bottom:8px;font-size:11px;color:var(--warm-gray);">任务点 {{ modal.data.id }} · {{ modal.data.name }} 物资/完成记录</div>
+          <table class="rank-table" v-if="invItems.length">
+            <thead><tr><th>时间</th><th>来源</th><th>物品类型</th><th>物品ID</th></tr></thead>
+            <tbody>
+              <tr v-for="r in invItems" :key="r.id">
+                <td>{{ r.created_at }}</td><td>{{ r.source==='complete'?'完成送出':'接收入库' }}</td><td>{{ r.item_type }}</td><td>{{ r.item_id||'—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div v-else style="padding:12px;text-align:center;color:var(--warm-gray);">暂无库存流动记录</div>
+        </template>
+
+        <!-- 送出道具表单 -->
+        <template v-if="modal.type==='tpComplete'">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--warm-gray);">线索编号</span><input class="input-mono" v-model="tpForm.clue_id" placeholder="无" style="width:70px;">
+            <span style="font-size:11px;color:var(--warm-gray);">金露水</span><input class="input-mono" v-model="tpForm.golden_dew_count" type="number" min="0" style="width:60px;">
+            <span style="font-size:11px;color:var(--warm-gray);">护盾卡</span><input class="input-mono" v-model="tpForm.shield_card_count" type="number" min="0" style="width:60px;">
+            <span style="font-size:11px;color:var(--warm-gray);">静止卡</span><input class="input-mono" v-model="tpForm.static_card_count" type="number" min="0" style="width:60px;">
+            <button class="btn-sm amber" @click="markTaskPointComplete">送出道具</button>
+          </div>
+          <div style="font-size:10px;color:var(--warm-gray);margin-top:4px;">完成送出 → 线索/金露水/护盾卡/静止卡 · 露水送出已砍掉(此弹窗不再送露水) · 金露水进库存 · 触发15秒全局免疫</div>
+        </template>
+
+        <!-- 接收物资表单 -->
+        <template v-if="modal.type==='tpReceive'">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--warm-gray);">线索编号</span><input class="input-mono" v-model="tpForm.clue_id" placeholder="无" style="width:70px;">
+            <span style="font-size:11px;color:var(--warm-gray);">露水编号</span><input class="input-mono" v-model="tpForm.dew_id" type="number" min="0" style="width:70px;" placeholder="无">
+            <span style="font-size:11px;color:var(--warm-gray);">金露水</span><input class="input-mono" v-model="tpForm.golden_dew_count" type="number" min="0" style="width:60px;">
+            <span style="font-size:11px;color:var(--warm-gray);">护盾卡</span><input class="input-mono" v-model="tpForm.shield_card_count" type="number" min="0" style="width:60px;">
+            <span style="font-size:11px;color:var(--warm-gray);">静止卡</span><input class="input-mono" v-model="tpForm.static_card_count" type="number" min="0" style="width:60px;">
+            <button class="btn-sm teal" @click="markTaskPointReceive">接收入库</button>
+          </div>
+          <div style="font-size:10px;color:var(--warm-gray);margin-top:4px;">接收入库 → 露水按编号精确收回任务点池（重置未收集） · 不触发全局免疫</div>
+        </template>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="footer"><span class="dot" style="animation:blink 1s infinite;"></span> 乌波 · 极限挑战游戏系统 v3.0 · 端口:8080 · NoneBot2</div>
+  <div v-if="toast" class="toast" :class="toast.type">{{ toast.msg }}</div>
+
+</div>
+<script>
+const { createApp, ref, reactive, computed, onMounted, onUnmounted, nextTick } = Vue;
+createApp({
+  setup(){
+    const tab=ref('dashboard');
+    const tabs=[{id:'dashboard',label:'指挥台'},{id:'players',label:'玩家'},{id:'taskpoints',label:'任务点'},{id:'hunters',label:'猎人'},{id:'clues',label:'线索'},{id:'dews',label:'露水'},{id:'settings',label:'设置'}];
+    const st=reactive({status:'加载中',active:false,remaining:'00:00',remaining_seconds:0,dew_stats:{total:0,collected:0},dew_pct:0});
+    const dews=ref([]);const clues=ref([]);const taskPoints=ref([]);const players=ref([]);const goldenDews=ref([]);const hunters=ref([]);
+    const tpForm=reactive({task_point_id:1,clue_id:'',dew_id:0,golden_dew_count:0,shield_card_count:0,static_card_count:0});
+    const dewTargetInput=ref(0);const frenzyActive=ref(false);
+    const edTP=reactive({id:0,name:'',tp_type:'solo',card_name:'无',golden_dew_count:0,status:'启用',static_card_count:0,static_card_collected:0,shield_card_count:0,shield_card_collected:0,origId:0});
+    const statusMenuId=ref(null);
+    const pstats=reactive({'存活':0,'淘汰':0,'复活':0,total:0,groups:[]});
+    const playerSearch=ref('');const playerStatusFilter=ref('');
+    const dewSearch=ref('');const dewFilter=ref('');
+    const clueSearch=ref('');const clueTypeFilter=ref('');const clueStatusFilter=ref('');const clueTPFilter=ref('');
+    const edClue=reactive({id:0,clue_type:'真',task_point_id:0,content:'',hidden_npc_name:null,hunter_name:null,origId:0});
+    const edDew=reactive({id:0,dew_value:2,status:'未收集',origId:0,tpId:0,hunter_name:null,pool:'tp'});
+    const edGD=reactive({id:0,task_point_id:1,origId:0});
+    const edPlayer=reactive({id:0,group_num:1,name:'',note:'',origId:0});
+    const cfg=reactive({game_group:'',work_group:'',backend_group:''});
+    const cfgForm=reactive({game_group:'',work_group:'',backend_group:''});
+    const toast=ref(null);const clock=ref('');
+    const gameMinutes=ref(90);const importFile=ref(null);const importing=ref(false);
+    const npcs=ref([]);const invItems=ref([]);
+    const newHunterName=ref('');const assignClueId=ref(0);
+    const newDewId=ref(0);const newDewVal=ref(2);
+    const newClueId=ref(0);const newClueType=ref('真');const newClueContent=ref('');
+    const hunterItems=computed(()=>{
+      const name=modal.data?.name;
+      if(!name)return {clues:[],dews:[]};
+      const hc=clues.value.filter(c=>c.hunter_name===name);
+      const hd=dews.value.filter(d=>d.hunter_name===name);
+      return {clues:hc,dews:hd};
+    });
+    const orphanClues=computed(()=>clues.value.filter(c=>(!c.task_point_id&&!c.hunter_name)).sort((a,b)=>a.id-b.id));
+    const unassignedClues=computed(()=>clues.value.filter(c=>!c.hunter_name).sort((a,b)=>a.id-b.id));
+    const minStr=computed(()=>String(Math.floor(st.remaining_seconds/60)).padStart(2,'0'));
+    const secStr=computed(()=>String(st.remaining_seconds%60).padStart(2,'0'));
+
+    const modal=reactive({show:false,type:'',title:'',tip:'',data:{},wide:false});
+    function openModal(type,data){
+      modal.data=data||{};
+      modal.wide=false;
+      if(type==='playerForm'){modal.title=(data&&data.id)?'编辑玩家 '+data.group_num+'组 '+data.name:'新增玩家';
+        edPlayer.id=data?.id||0;edPlayer.group_num=data?.group_num||1;edPlayer.name=data?.name||'';edPlayer.note=data?.note||'';edPlayer.origId=data?.id||0;}
+      else if(type==='tpForm'){modal.title=(data&&data.id)?'编辑任务点 #'+data.id:'新增任务点';
+        edTP.id=data?.id||0;edTP.name=data?.name||'';edTP.tp_type=data?.tp_type||'solo';edTP.card_name=data?.card_name||'无';
+        edTP.golden_dew_count=data?.golden_dew_count||0;edTP.status=data?.status||'启用';
+        edTP.static_card_count=data?.static_card_count||0;edTP.static_card_collected=data?.static_card_collected||0;
+        edTP.shield_card_count=data?.shield_card_count||0;edTP.shield_card_collected=data?.shield_card_collected||0;
+        edTP.origId=data?.id||0;}
+      else if(type==='hunterManage'){modal.title='猎人管理 · '+(data&&data.name||'');}
+      else if(type==='clueForm'){modal.title=(data&&data.id)?'编辑线索 #'+data.id:'新增线索';
+        edClue.id=data?.id||0;edClue.clue_type=data?.clue_type||'真';edClue.task_point_id=data?.task_point_id||(modal.data.task_point_id||0);
+        edClue.content=data?.content||'';edClue.hidden_npc_name=data?.hidden_npc_name||null;edClue.hunter_name=data?.hunter_name||null;edClue.origId=data?.id||0;}
+      else if(type==='dewForm'){modal.title=(data&&data.id)?'编辑露水 #'+data.id:'新增露水';
+        edDew.id=data?.id||0;edDew.dew_value=data?.dew_value||2;edDew.status=data?.status||'未收集';edDew.origId=data?.id||0;edDew.tpId=data?.tpId||0;edDew.hunter_name=data?.hunter_name||null;edDew.pool=data?.hunter_name?'hunter':'tp';}
+      else if(type==='gdForm'){modal.title=(data&&data.id)?'编辑金露水 #'+data.id:'新增金露水';
+        edGD.id=data?.id||0;edGD.task_point_id=data?.task_point_id||(modal.data.task_point_id||1);edGD.origId=data?.id||0;}
+      else if(type==='clueManage'){modal.title='任务点 '+data.id+' · '+data.name+' / 线索管理';modal.wide=true;}
+      else if(type==='gdManage'){modal.title='任务点 '+data.id+' · '+data.name+' / 金露水管理';}
+      else if(type==='dewManage'){modal.title='任务点 '+data.id+' · '+data.name+' / 露水管理';
+        modal.tip='露水通过同编号真线索归属本任务点 · 新增露水：先在线索管理新建真线索（同编号、归属本任务点），再在此新增同编号露水';modal.wide=true;}
+      else if(type==='inventory'){modal.title='任务点 '+data.id+' · '+data.name+' / 库存流水';modal.wide=true;fetchInv(data.id);}
+      else if(type==='tpComplete'){modal.title='任务点 '+data.id+' · '+data.name+' / 送出道具';tpForm.task_point_id=data.id;tpForm.clue_id='';tpForm.dew_id=0;tpForm.golden_dew_count=0;tpForm.shield_card_count=0;tpForm.static_card_count=0;}
+      else if(type==='tpReceive'){modal.title='任务点 '+data.id+' · '+data.name+' / 接收物资';tpForm.task_point_id=data.id;tpForm.clue_id='';tpForm.dew_id=0;tpForm.golden_dew_count=0;tpForm.shield_card_count=0;tpForm.static_card_count=0;}
+      modal.type=type;modal.show=true;
+    }
+    function closeModal(){modal.show=false;modal.type='';modal.tip='';modal.data={};invItems.value=[];edClue.origId=0;edDew.origId=0;edGD.origId=0;edPlayer.origId=0;}
+
+    const tpFilteredClues=computed(()=>modal.data.id?clues.value.filter(c=>c.task_point_id===modal.data.id).sort((a,b)=>a.id-b.id):[]);
+    const tpFilteredGD=computed(()=>modal.data.id?goldenDews.value.filter(d=>d.task_point_id===modal.data.id).sort((a,b)=>a.id-b.id):[]);
+    const tpFilteredDews=computed(()=>{if(!modal.data.id)return[];const tpId=modal.data.id;
+      const trueIds=new Set(clues.value.filter(c=>c.task_point_id===tpId&&c.clue_type==='真').map(c=>c.id));
+      return dews.value.filter(d=>trueIds.has(d.id)).sort((a,b)=>a.id-b.id);});
+    const tpDewTotal=computed(()=>tpFilteredDews.value.reduce((s,d)=>s+(d.dew_value||2),0));
+
+    function getClueContent(id){const c=clues.value.find(c=>c.id===id&&c.clue_type==='真');return c?('真线索'+c.id+'·'+(c.content||'—').slice(0,20)):null;}
+    function getDewTpName(dewId){const c=clues.value.find(c=>c.id===dewId&&c.clue_type==='真');if(!c)return '—';const tp=taskPoints.value.find(t=>t.id===c.task_point_id);return tp?('任务点 '+tp.id):'—';}
+
+    function tpStats(tpId){
+      const tpClues=clues.value.filter(c=>c.task_point_id===tpId);
+      const tpGD=goldenDews.value.filter(g=>g.task_point_id===tpId);
+      const trueIds=new Set(clues.value.filter(c=>c.task_point_id===tpId&&c.clue_type==='真').map(c=>c.id));
+      const tpDews=dews.value.filter(d=>trueIds.has(d.id));
+      return {
+        clue:{total:tpClues.length,raw:tpClues.filter(c=>c.status==='未收集').length,revealed:tpClues.filter(c=>c.status==='已发现未收集'||c.status==='已收集未发现').length,collected:tpClues.filter(c=>c.status==='已收集已发现'||c.status==='已收集未发现').length},
+        gd:{total:tpGD.length,raw:tpGD.filter(g=>g.status==='未收集').length,collected:tpGD.filter(g=>g.status==='已收集').length,used:tpGD.filter(g=>g.status==='已使用').length},
+        dew:{total:tpDews.reduce((s,d)=>s+(d.dew_value||2),0),raw:tpDews.filter(d=>d.status==='未收集').reduce((s,d)=>s+(d.dew_value||2),0),revealed:tpDews.filter(d=>d.status==='已发现未收集').reduce((s,d)=>s+(d.dew_value||2),0),collected:tpDews.filter(d=>d.status==='已收集').reduce((s,d)=>s+(d.dew_value||2),0)}
+      };
+    }
+
+    function hunterStats(name){
+      const hc=clues.value.filter(c=>c.hunter_name===name);
+      const hd=dews.value.filter(d=>d.hunter_name===name);
+      return {
+        clue:{total:hc.length,raw:hc.filter(c=>c.status==='未收集').length,revealed:hc.filter(c=>c.status==='已发现未收集'||c.status==='已收集未发现').length,collected:hc.filter(c=>c.status==='已收集已发现'||c.status==='已收集未发现').length},
+        dew:{total:hd.reduce((s,d)=>s+(d.dew_value||2),0),raw:hd.filter(d=>d.status==='未收集').reduce((s,d)=>s+(d.dew_value||2),0),revealed:hd.filter(d=>d.status==='已发现未收集').reduce((s,d)=>s+(d.dew_value||2),0),collected:hd.filter(d=>d.status==='已收集').reduce((s,d)=>s+(d.dew_value||2),0)}
+      };
+    }
+    const dewAllStats=computed(()=>{
+      const total=dews.value.reduce((s,d)=>s+(d.dew_value||2),0);
+      const collected=dews.value.filter(d=>d.status==='已收集').reduce((s,d)=>s+(d.dew_value||2),0);
+      const revealed=dews.value.filter(d=>d.status==='已发现未收集').reduce((s,d)=>s+(d.dew_value||2),0);
+      return {total,collected,revealed,raw:total-collected-revealed};
+    });
+    const dewPairingInfo=computed(()=>{
+      if(edDew.pool==='hunter')return '猎人池：独立记录，无需配对线索（当前归属猎人「'+(edDew.hunter_name||'')+'」）。';
+      const id=Number(edDew.id);
+      if(!id)return '任务点池：填写编号后，将自动按同编号「真线索」配对其所属任务点。';
+      const c=clues.value.find(c=>c.id===id&&c.clue_type==='真');
+      if(!c)return '任务点池：未找到编号 '+id+' 的同编号真线索，请先在线索管理新建该编号真线索。';
+      const tp=taskPoints.value.find(t=>t.id===c.task_point_id);
+      return '任务点池：配对线索 #'+c.id+' → '+(tp?('任务点 '+tp.id+' '+tp.name):'无主线索（请给该线索指定任务点）');
+    });
+    function onDewPoolChange(){if(edDew.pool!=='hunter'){edDew.hunter_name=null;}}
+
+    async function api(p,o){
+      try{const r=await fetch(p,o);if(!r.ok)throw new Error((await r.json()).detail||'Err');return await r.json();}
+      catch(e){showToast(e.message,'error');throw e;}
+    }
+    async function fs(){const d=await api('/api/status');Object.assign(st,d);}
+    async function fd(){dews.value=await api('/api/dews');}
+    async function fc(){clues.value=await api('/api/clues');}
+    async function ft(){taskPoints.value=await api('/api/task_points');}
+    async function fp(){players.value=await api('/api/players');Object.assign(pstats,await api('/api/player/stats'));}
+    async function fgd(){goldenDews.value=await api('/api/golden_dews');}
+    async function ffb(){npcs.value=await api('/api/npcs');}
+
+    const filteredPlayers=computed(()=>{
+      let list=players.value.slice();
+      if(playerSearch.value){const s=playerSearch.value.toLowerCase();list=list.filter(p=>String(p.group_num).includes(s)||p.name.toLowerCase().includes(s));}
+      if(playerStatusFilter.value)list=list.filter(p=>p.status===playerStatusFilter.value);
+      return list.sort((a,b)=>a.group_num-b.group_num||a.name.localeCompare(b.name));
+    });
+    const filteredDews=computed(()=>{
+      let list=dews.value.slice();
+      if(dewSearch.value){const s=dewSearch.value;list=list.filter(d=>String(d.id).includes(s));}
+      if(dewFilter.value)list=list.filter(d=>d.status===dewFilter.value);
+      return list;
+    });
+    const filteredClues=computed(()=>{
+      let list=clues.value.slice();
+      if(clueSearch.value){const s=clueSearch.value.toLowerCase();list=list.filter(c=>String(c.id).includes(s)||(c.content||'').toLowerCase().includes(s));}
+      if(clueTypeFilter.value)list=list.filter(c=>c.clue_type===clueTypeFilter.value);
+      if(clueStatusFilter.value)list=list.filter(c=>c.status===clueStatusFilter.value);
+      if(clueTPFilter.value)list=list.filter(c=>c.task_point_id===clueTPFilter.value);
+      return list.sort((a,b)=>a.id-b.id);
+    });
+
+    async function elimPlayer(p){if(!confirm('确认淘汰 '+p.group_num+'组'+p.name+'？'))return;await api('/api/player/eliminate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({group_num:p.group_num,name:p.name})});showToast(p.group_num+'组'+p.name+' 已淘汰','info');fp();}
+    async function resetPlayer(p){if(!confirm('确认重置 '+p.group_num+'组'+p.name+' 为存活？（不消耗金露水）'))return;await api('/api/player/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({group_num:p.group_num,name:p.name})});showToast(p.group_num+'组'+p.name+' 已重置','success');fp();}
+    async function revivePlayer(p){const gd=st.golden_dew_stats?.available??0;if(gd<=0){showToast('金露水库存不足','error');return;}if(!confirm('确认复活 '+p.group_num+'组'+p.name+'？\n消耗 1 个金露水（库存：'+gd+'）'))return;const r=await api('/api/player/revive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({group_num:p.group_num,name:p.name})});showToast(p.group_num+'组'+p.name+' 已复活','success');fp();fs();}
+    const clearConfirmText=ref('');
+    async function clearAllData(){if(clearConfirmText.value!=='清空')return showToast('请在输入框输入「清空」以确认','error');if(!confirm('确认清空所有数据？此操作不可撤销！\n将删除玩家/任务点/线索/露水/金露水/NPC/操作日志，并重置游戏状态。'))return;await api('/api/player/clear_all',{method:'POST'});showToast('已清空所有数据','info');clearConfirmText.value='';fp();fd();fc();ft();fgd();fs();ffb();fetchOpsLog();}
+
+    async function collectDew(id){await api('/api/dew/collect/'+id,{method:'POST'});showToast('露水'+id+' 已收集','success');fd();fc();fs();ft();fgd();}
+    async function collectGoldenDew(id){await api('/api/golden_dew/collect/'+id,{method:'POST'});showToast('金露水'+id+' 已收集','success');fgd();fs();ft();}
+    async function resetDew(id){if(!confirm('确认重置露水'+id+'为未收集？'))return;await api('/api/dew/reset/'+id,{method:'POST'});showToast('露水'+id+' 已重置','success');fd();fc();fgd();fs();}
+    async function resetGoldenDew(id){if(!confirm('确认重置金露水'+id+'？'))return;await api('/api/golden_dew/reset/'+id,{method:'POST'});showToast('金露水'+id+' 已重置','success');fgd();fs();ft();}
+
+    async function startGame(){const m=gameMinutes.value||90;if(!confirm('确认开始 '+m+' 分钟？'))return;await api('/api/game/start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({minutes:m})});showToast('游戏已开始','success');fs();}
+    async function pauseGame(){await api('/api/game/pause',{method:'POST'});showToast('已暂停','info');fs();}
+    async function resumeGame(){await api('/api/game/resume',{method:'POST'});showToast('已继续','info');fs();}
+    async function endGame(){if(!confirm('确认结束？'))return;await api('/api/game/end',{method:'POST'});showToast('已结束','success');fs();}
+    async function saveDewTarget(){await api('/api/config/dew_target',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:dewTargetInput.value||0})});showToast('露水目标已保存','success');fs();}
+    async function saveConfig(){await api('/api/config/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfgForm)});showToast('配置已保存','success');fetchConfig();}
+    async function fetchConfig(){const d=await api('/api/config');Object.assign(cfg,d);Object.assign(cfgForm,d);}
+    async function exportJSON(){const a=document.createElement('a');a.href='/api/export/json';a.click();}
+    async function exportCSV(){const a=document.createElement('a');a.href='/api/export/csv';a.click();}
+
+    async function saveTP(){if(!edTP.id||!edTP.name)return showToast('编号和名称必填','error');
+      const body={id:edTP.id,name:edTP.name,tp_type:edTP.tp_type,card_name:edTP.card_name,golden_dew_count:edTP.golden_dew_count,status:edTP.status,static_card_count:edTP.static_card_count||0,shield_card_count:edTP.shield_card_count||0,static_card_collected:edTP.static_card_collected||0,shield_card_collected:edTP.shield_card_collected||0};
+      if(edTP.origId){await api('/api/task_point/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('已更新','success');}
+      else{await api('/api/task_point/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('已新增','success');}
+      edTP.origId=0;edTP.id=0;edTP.name='';closeModal();ft();
+    }
+    async function deleteTP(id){if(!confirm('确认删除任务点'+id+'？将级联删除关联的露水、线索、金露水！'))return;await api('/api/task_point/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id})});showToast('任务点'+id+' 已删除','success');ft();fs();closeModal();}
+    async function switchTPStatus(id,status){await api('/api/task_point/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});ft();}
+
+    async function adjCard(tp,field,delta){
+      const nv=(tp[field]||0)+delta;if(nv<0)return showToast('库存不能为负','error');
+      const body={id:tp.id,name:tp.name,tp_type:tp.tp_type,card_name:tp.card_name||'无',golden_dew_count:tp.golden_dew_count||0,status:tp.status||'启用',
+        static_card_count:field==='static_card_count'?nv:tp.static_card_count||0,static_card_collected:tp.static_card_collected||0,
+        shield_card_count:field==='shield_card_count'?nv:tp.shield_card_count||0,shield_card_collected:tp.shield_card_collected||0};
+      await api('/api/task_point/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      showToast((delta>0?'+':'')+delta+' 张','success');ft();
+    }
+
+    async function saveClue(){if(!edClue.id)return showToast('请填写线索编号','error');
+      const body={id:edClue.id,clue_type:edClue.clue_type,task_point_id:edClue.task_point_id||0,content:edClue.content||'',hidden_npc_name:edClue.hidden_npc_name||null,hunter_name:edClue.hunter_name||null};
+      if(edClue.origId){await api('/api/clue/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('线索已更新','success');}
+      else{await api('/api/clue/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('线索已新增','success');}
+      closeModal();fc();ft();fh();
+    }
+    async function deleteClue(id){if(!confirm('确认删除线索'+id+'？'))return;await api('/api/clue/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('线索'+id+' 已删除','success');fc();ft();}
+    async function collectClue(id){await api('/api/clue/collect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('线索'+id+' 已标记','success');fc();}
+    async function resetClue(id){if(!confirm('确认重置线索'+id+'？'))return;await api('/api/clue/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('线索'+id+' 已重置','success');fc();}
+
+    async function fh(){hunters.value=await api('/api/hunter/list');}
+    async function addHunter(){if(!newHunterName.value||!newHunterName.value.trim())return showToast('请输入猎人姓名','error');openModal('hunterManage',{name:newHunterName.value.trim()});newHunterName.value='';}
+    async function addHunterClue(){if(!newClueId.value)return showToast('请填写线索编号','error');
+      await api('/api/clue/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:parseInt(newClueId.value),clue_type:newClueType.value||'真',task_point_id:0,content:newClueContent.value||'',hidden_npc_name:null,hunter_name:modal.data.name})});
+      showToast('已为 '+modal.data.name+' 新建线索','success');newClueId.value=0;newClueContent.value='';fc();ft();fh();}
+    async function removeHunter(name){if(!confirm('确认删除猎人 '+name+'？将解除其名下所有线索的归属（变无主），并删除其名下全部露水。'))return;
+      const cl=clues.value.filter(c=>c.hunter_name===name);
+      for(const c of cl){await api('/api/clue/unassign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})});}
+      const dl=dews.value.filter(d=>d.hunter_name===name);
+      for(const d of dl){await api('/api/dew/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:d.id})});}
+      showToast('猎人 '+name+' 已删除','success');fc();fd();fh();}
+    async function addHunterDew(){if(!newDewId.value)return showToast('请填写露水编号','error');
+      await api('/api/dew/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:parseInt(newDewId.value),dew_value:parseInt(newDewVal.value)||2,status:'未收集',hunter_name:modal.data.name})});
+      showToast('已为 '+modal.data.name+' 新建露水','success');newDewId.value=0;newDewVal.value=2;fd();fh();}
+    async function deleteHunterDew(id){if(!confirm('确认删除该猎人露水'+id+'？'))return;await api('/api/dew/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('露水'+id+' 已删除','success');fd();fh();}
+    async function assignSelectedClue(){if(!assignClueId.value)return showToast('请选择线索','error');await api('/api/hunter/clue/assign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clue_id:assignClueId.value,hunter_name:modal.data.name})});showToast('已分配给 '+modal.data.name,'success');assignClueId.value=0;fc();ft();fh();}
+    async function unassignClueFromHunter(id){if(!confirm('确认解除该线索归属（变无主）？'))return;await api('/api/clue/unassign',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('线索'+id+' 已解除归属','success');fc();ft();fh();}
+    async function assignOrphanToTP(c){if(!c._assignTP)return showToast('请选择目标任务点','error');await api('/api/clue/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id,clue_type:c.clue_type,task_point_id:parseInt(c._assignTP),content:c.content||'',hidden_npc_name:c.hidden_npc_name||null,hunter_name:null})});showToast('线索'+c.id+' 已分配给任务点'+c._assignTP,'success');fc();ft();}
+
+    async function saveDew(){if(!edDew.id)return showToast('请填写露水编号','error');
+      const body={id:parseInt(edDew.id),dew_value:parseInt(edDew.dew_value)||2,status:edDew.status,hunter_name:edDew.hunter_name||null};
+      if(edDew.origId){await api('/api/dew/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('露水已更新','success');}
+      else{await api('/api/dew/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('露水已新增','success');}
+      closeModal();fd();fc();fgd();fs();
+    }
+    async function deleteDew(id){if(!confirm('确认删除露水'+id+'？'))return;await api('/api/dew/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('露水'+id+' 已删除','success');fd();fc();fgd();fs();}
+    async function saveGD(){if(!edGD.id)return showToast('请填写金露水编号','error');
+      const body={id:parseInt(edGD.id),task_point_id:parseInt(edGD.task_point_id)||1};
+      if(edGD.origId){await api('/api/golden_dew/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('金露水已更新','success');}
+      else{await api('/api/golden_dew/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('金露水已新增','success');}
+      closeModal();fgd();fs();ft();
+    }
+    async function deleteGD(id){if(!confirm('确认删除金露水'+id+'？'))return;await api('/api/golden_dew/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('金露水'+id+' 已删除','success');fgd();fs();ft();}
+
+    async function savePlayer(){if(!edPlayer.name||!edPlayer.name.trim())return showToast('请填写姓名','error');if(!edPlayer.group_num)return showToast('请填写组号','error');
+      if(edPlayer.origId){await api('/api/player/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:edPlayer.origId,group_num:parseInt(edPlayer.group_num),name:edPlayer.name.trim(),note:edPlayer.note||''})});showToast('玩家已更新','success');}
+      else{await api('/api/player/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({group_num:parseInt(edPlayer.group_num),name:edPlayer.name.trim(),note:edPlayer.note||''})});showToast('玩家已新增','success');}
+      closeModal();fp();fs();
+    }
+    async function deletePlayer(id){if(!confirm('确认删除该玩家？'))return;await api('/api/player/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});showToast('玩家已删除','success');closeModal();fp();fs();}
+
+    async function markTaskPointComplete(){
+      const body={task_point_id:tpForm.task_point_id,clue_id:(tpForm.clue_id&&tpForm.clue_id!=='无')?parseInt(tpForm.clue_id):null,dew_id:tpForm.dew_id||0,golden_dew_count:tpForm.golden_dew_count||0,shield_card_count:tpForm.shield_card_count||0,static_card_count:tpForm.static_card_count||0};
+      try{const r=await api('/api/task_point/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('送出成功 | '+r.details,'success');fs();ft();fc();fgd();closeModal();}
+      catch(e){showToast('送出失败: '+(e.message||''),'error');}
+    }
+    async function markTaskPointReceive(){
+      const body={task_point_id:tpForm.task_point_id,clue_id:(tpForm.clue_id&&tpForm.clue_id!=='无')?parseInt(tpForm.clue_id):null,dew_id:tpForm.dew_id||0,golden_dew_count:tpForm.golden_dew_count||0,shield_card_count:tpForm.shield_card_count||0,static_card_count:tpForm.static_card_count||0};
+      try{const r=await api('/api/task_point/receive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});showToast('接收成功 | '+r.details,'success');fs();ft();fc();fgd();closeModal();}
+      catch(e){showToast('接收失败: '+(e.message||''),'error');}
+    }
+    async function fetchInv(tpId){try{invItems.value=await api('/api/task_points/'+tpId+'/inventory');}catch(e){invItems.value=[];}}
+
+    async function toggleFrenzy(){
+      if(frenzyActive.value){if(!confirm('确认关闭狂欢模式？'))return;await api('/api/frenzy/deactivate',{method:'POST'});frenzyActive.value=false;showToast('狂欢模式已关闭','success');}
+      else{if(!confirm('确认开启狂欢模式？淘汰冷却→40s 线索自动公示'))return;const r=await api('/api/frenzy/activate',{method:'POST'});if(r&&r.ok){frenzyActive.value=true;showToast('狂欢已激活，线索公示'+r.revealed+'条','success');fc();}else if(r&&r.msg)showToast(r.msg,'error');}
+    }
+
+    function onFile(e){const f=e.target.files[0];if(f)importFile.value=f;}
+    async function doImport(){
+      if(!importFile.value)return;importing.value=true;
+      try{const form=new FormData();form.append('file',importFile.value);const r=await fetch('/api/import/all',{method:'POST',body:form});if(!r.ok)throw new Error('HTTP '+r.status);const result=await r.json();
+        const errs=Array.isArray(result.errors)?result.errors:[];const msg=[];
+        for(const[k,v]of Object.entries(result)){if(k==='errors')continue;if(typeof v==='number'&&v>0)msg.push(k+' +'+v);}
+        if(errs.length){console.warn('导入错误:',errs);showToast((msg.length?msg.join('，')+'；':'')+errs.length+' 行失败','error');}
+        else if(msg.length)showToast('导入成功：'+msg.join('，'),'success');else showToast('未导入任何数据','error');
+        importFile.value=null;fd();fc();ft();fs();fp();fgd();ffb();
+      }catch(e){showToast('导入失败: '+e.message,'error');}
+      importing.value=false;
+    }
+
+    function showToast(msg,type='info'){toast.value={msg,type};setTimeout(()=>toast.value=null,3000);}
+    function tpTypeLabel(t){return t==='team_vs'?'组间对抗':t==='team_coop'?'组间合作':'单独任务';}
+    function tpName(tpId){const tp=taskPoints.value.find(t=>t.id===tpId);return tp?tp.id+'.'+tp.name:'—';}
+    function clueStatusChip(s){if(s==='已收集已发现'||s==='已收集')return 'tp-status-chip s-on';if(s==='已发现未收集'||s==='已收集未发现')return 'tp-status-chip s-standby';return 'tp-status-chip s-off';}
+
+    const opsLog=ref([]);const selectedOpsId=ref(null);
+    async function fetchOpsLog(){try{const d=await api('/api/operations/recent?limit=20');opsLog.value=d.map(o=>({id:o.id,time:(o.created_at||'').slice(-5),msg:o.target_desc,op_type:o.op_type}));}catch(e){}}
+    function selectOps(e){selectedOpsId.value=selectedOpsId.value===e.id?null:e.id;}
+    async function undoEvent(logId){if(!confirm('确认撤销此操作？'))return;try{const r=await api('/api/operation/undo/'+logId,{method:'POST'});showToast(r.msg,'success');selectedOpsId.value=null;fetchOpsLog();fs();fd();fc();ft();fp();fgd();}catch(e){}}
+
+    async function switchTab(t){
+      tab.value=t;
+      if(t==='dashboard'){fs();ft();fc();fp();fgd();}
+      if(t==='players'){fp();}
+      if(t==='taskpoints'){ft();fc();fgd();fd();}
+      if(t==='clues'){fc();ft();}
+      if(t==='hunters'){fh();fc();ft();fd();}
+      if(t==='dews'){fd();fc();fgd();fs();fp();const s=await api('/api/status');dewTargetInput.value=(s.dew_stats?.target)||0;}
+      if(t==='settings'){fetchConfig();ffb();}
+    }
+
+    function updateClock(){const n=new Date();const w=['日','一','二','三','四','五','六'][n.getDay()];clock.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' 周'+w+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');}
+    let p1,p2;
+    onMounted(()=>{
+      fs();ft();fc();fh();fetchConfig();fetchOpsLog();
+      p1=setInterval(fs,5000);p2=setInterval(fetchOpsLog,4000);
+      // 任务点页实时刷新
+      setInterval(()=>{if(tab.value==='taskpoints'){ft();fc();fgd();fd();}},5000);
+      // 猎人页实时刷新
+      setInterval(()=>{if(tab.value==='hunters'){fh();fc();fd();}},5000);
+      setInterval(updateClock,1000);updateClock();
+      nextTick(()=>{
+        const el=document.getElementById('heroTitle');if(el){el.style.animation='heroGlitch 0.4s ease';setTimeout(()=>el.style.animation='glowPulse 3s infinite',400);}
+      });
+    });
+    onUnmounted(()=>{clearInterval(p1);clearInterval(p2);});
+
+    return {tab,tabs,st,dews,taskPoints,cfg,cfgForm,toast,clock,gameMinutes,importFile,importing,minStr,secStr,switchTab,startGame,pauseGame,resumeGame,endGame,saveConfig,exportJSON,exportCSV,onFile,doImport,collectDew,getClueContent,getDewTpName,tpTypeLabel,players,pstats,playerSearch,playerStatusFilter,filteredPlayers,opsLog,selectedOpsId,selectOps,undoEvent,fetchOpsLog,elimPlayer,revivePlayer,resetPlayer,clearAllData,clearConfirmText,dewSearch,dewFilter,filteredDews,dewTargetInput,saveDewTarget,frenzyActive,toggleFrenzy,resetDew,resetGoldenDew,edTP,saveTP,deleteTP,switchTPStatus,statusMenuId,adjCard,clues,clueSearch,clueTypeFilter,clueStatusFilter,clueTPFilter,filteredClues,edClue,saveClue,deleteClue,collectClue,resetClue,tpName,clueStatusChip,edDew,deleteDew,saveDew,edGD,saveGD,deleteGD,goldenDews,collectGoldenDew,edPlayer,savePlayer,deletePlayer,modal,openModal,closeModal,tpStats,dewAllStats,tpFilteredClues,tpFilteredGD,tpFilteredDews,tpDewTotal,invItems,fetchInv,tpForm,markTaskPointComplete,npcs,hunters,hunterStats,hunterItems,orphanClues,unassignedClues,newHunterName,assignClueId,newDewId,newDewVal,addHunter,removeHunter,addHunterDew,deleteHunterDew,assignSelectedClue,unassignClueFromHunter,assignOrphanToTP,addHunterClue,newClueId,newClueType,newClueContent,dewPairingInfo,onDewPoolChange,fh};
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

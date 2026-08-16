@@ -1,0 +1,496 @@
+# Claw 前端方案 — Web 管理页
+
+## 1. 技术选型
+
+| 项目 | 方案 |
+|------|------|
+| 框架 | Vue 3 CDN（不装 npm） |
+| 样式 | 纯手写 CSS，内联在 `<style>` 中 |
+| 字体 | Google Fonts CDN: `Archivo Black` + `JetBrains Mono` + `Noto Sans SC` |
+| 图标 | 内联 SVG，自建图标库 |
+| 数据刷新 | 5 秒轮询 `/api/status`，10 秒轮询 `/api/eliminations` |
+| 文件上传 | `<input type="file">` + `FormData` + `fetch` |
+| 反馈 | Toast 通知（不用 `alert`） |
+| 部署 | 单 `web/index.html` 文件，FastAPI 直接返回 |
+
+---
+
+## 2. 视觉设计系统 — Cassette Futurism
+
+参考 70-80 年代科幻控制台、《异形》飞船界面、Commodore 计算机手册。
+
+### 2.1 色彩
+
+```css
+:root {
+  --bg:              #e8e1cf;   /* 页面米色底 */
+  --bg-light:        #f1ebd9;   /* 卡片浅底 */
+  --bg-card:         #ede5d5;   /* 面板底色 */
+  --panel-bg:        #0d0a08;   /* 终端黑底 */
+  --border:          #1a1612;   /* 硬边边框/文字 */
+  --amber:           #d97706;   /* 琥珀强调色 */
+  --amber-bright:    #f59e0b;   /* 亮琥珀（终端文字） */
+  --amber-dim:       #92400e;   /* 暗琥珀 */
+  --amber-pale:      #fde68a;   /* 浅琥珀（hover 底色） */
+  --mustard:         #ca8a04;   /* 芥末黄（复活/自报） */
+  --orange:          #ea580c;   /* 橙红（警告） */
+  --red:             #b91c1c;   /* 暗红（淘汰/危险） */
+  --green:           #15803d;   /* 暗绿（存活/成功） */
+  --green-bright:    #22c55e;   /* 亮绿（在线状态） */
+  --warm-gray:       #78716c;   /* 暖灰（次要文字） */
+  --warm-gray-light: #a8a29e;   /* 浅暖灰 */
+}
+```
+
+### 2.2 字体
+
+```css
+--mono:    'JetBrains Mono', 'Courier New', monospace;
+--display: 'Archivo Black', 'Arial Black', sans-serif;
+--cn:      'Noto Sans SC', sans-serif;
+```
+
+- 标题/标签：`Archivo Black`（英文大写）+ `Noto Sans SC`（中文）
+- 数据/等宽：`JetBrains Mono`
+- 正文：`Noto Sans SC`
+
+### 2.3 质感
+
+| 质感 | CSS | 应用 |
+|------|-----|------|
+| 硬边阴影(大) | `box-shadow: 6px 6px 0 0 #1a1612` | 所有面板 |
+| 硬边阴影(小) | `box-shadow: 4px 4px 0 0 #1a1612` | 统计方块/信号卡 |
+| 半调网格 | `radial-gradient(circle, rgba(26,22,18,0.05) 1px, transparent 1px); background-size: 22px 22px` | 页面底纹 |
+| CRT 扫描线 | `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(217,119,6,0.04) 2px, rgba(217,119,6,0.04) 4px)` | 终端区域 |
+| 米色纸纹 | `repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.012) 3px, rgba(0,0,0,0.012) 4px)` | 页面背景 |
+| 边框 | `border: 3px solid #1a1612` | 所有面板 |
+| 圆角 | **无圆角**，全部 `border-radius: 0` | 所有元素 |
+
+### 2.4 动画（12 种，已在 demo 验证）
+
+| # | 动画名 | 触发场景 | 实现 | 时长 |
+|---|--------|----------|------|------|
+| 1 | `heroGlitch` | 标题加载后故障撕裂 | `clip-path: inset()` + `translate` | 0.4s，一次性 |
+| 2 | `heroEntrance` | 标题首次弹入 | `opacity` + `translateY(-40px)` + `blur(4px)` | 0.8s |
+| 3 | `scanLine` | 终端区域持续 | `top: -10%` → `110%` 循环 | 5s infinite |
+| 4 | `countUpFlip` | 统计数字加载 | `perspective(400px) rotateX(-90deg)` → `0` + JS 递增 | 0.6s + 1s |
+| 5 | `slideInUp` | 面板/卡片入场 | `translateY(30px)` + `opacity: 0` → 正常 | 0.4-0.5s，错位 |
+| 6 | `slideInLeft` | 时间线左入 | `translateX(-40px)` + `blur(2px)` | 0.4s，错位 |
+| 7 | `slideInRight` | 右栏右入 | `translateX(40px)` + `blur(2px)` | 0.6s |
+| 8 | `barFill` | 存活率血条 | `width: 0%` → 实际% | 1.2s |
+| 9 | `pulseAmber` | 实时标签呼吸 | `box-shadow: 0 0 0 0 → 10px transparent` | 2s infinite |
+| 10 | `marquee` | ticker 滚动 | `translateX(0)` → `-50%` | 28s infinite |
+| 11 | `blink` | 光标/状态点/冒号 | `opacity: 1 → 0.15` 步进 | 0.7-1.5s |
+| 12 | `shakeX` | 按钮按下 | `translateX` 锯齿 + `rotate` | 0.4s |
+
+附：`glowPulse`（标题辉光呼吸）、`floatParticle`（终端粒子飘浮）、panel hover 位移 + 按钮按下位移。
+
+### 2.5 文案原则
+
+直观可读，不用抽象代号。
+
+| 场景 | ✅ 正确 | ❌ 错误 |
+|------|---------|---------|
+| 群名称 | 游戏群 / 工作群 / 后台群 | SIG-77A / TERMINAL 04 |
+| 淘汰来源 | 猎人捕获 / 自报淘汰 | HUNTER_CAPTURE / SELF_REPORT |
+| 详情标签 | 淘汰类型 / 操作猎人 / 所在群 / 消息原文 / 时间 | 信号来源 / 猎人QQ / 接收群组 / 时间戳 |
+| 按钮文字 | 开始 / 暂停 / 复活 / 结束 | START / PAUSE / REVIVE / END |
+
+---
+
+## 3. SVG 图标库
+
+统一 `viewBox="0 0 32 32"` 或 `0 0 24 24`，双色体系（琥珀黄/终端黑），全部内联在 HTML 中。
+
+### 统计图标（32x32）
+
+```html
+<!-- 存活：黑实心心形 -->
+<svg viewBox="0 0 32 32"><path d="M16 28S6 22 6 13a7 7 0 0 1 12.5-4A7 7 0 0 1 31 13c0 9-10 15-10 15z" fill="#1a1612"/></svg>
+
+<!-- 淘汰：琥珀黄底骷髅 -->
+<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="#f59e0b"/><circle cx="12" cy="13" r="2.5" fill="#ede5d5"/><circle cx="20" cy="13" r="2.5" fill="#ede5d5"/><path d="M10 22s2 3 6 3 6-3 6-3" stroke="#ede5d5" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+
+<!-- 复活：黑底实心星 -->
+<svg viewBox="0 0 32 32"><polygon points="16 3 20 11.5 29 13 22.5 19.5 24 28.5 16 24 8 28.5 9.5 19.5 3 13 12 11.5" fill="#1a1612"/></svg>
+```
+
+### 控制按钮图标（24x24）
+
+```html
+<!-- 开始：播放三角 -->
+<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
+
+<!-- 暂停：双竖线 -->
+<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>
+
+<!-- 复活：五角星 -->
+<svg viewBox="0 0 24 24"><path d="M12 2l3 7.5h7.5l-6 4.5 2.5 7.5L12 17l-7 4.5L7.5 14l-6-4.5H9z" fill="currentColor"/></svg>
+
+<!-- 结束：方块 X -->
+<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"/><line x1="7" y1="7" x2="17" y2="17" stroke="currentColor" stroke-width="4"/><line x1="17" y1="7" x2="7" y2="17" stroke="currentColor" stroke-width="4"/></svg>
+```
+
+### 其他图标
+
+- 时间线圆点：14x14 方形，3px 边框，红=被捕获，黄=自报
+- 展开箭头：`<polyline points="9 18 15 12 9 6">`，点击旋转 90°
+- 状态点：8x8 方形 + `box-shadow` 发光
+- 文件上传：自定义琥珀色边框按钮包裹隐藏 `<input type="file">`
+
+---
+
+## 4. 页面结构
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  顶部品牌栏（黑底琥珀字 + 在线状态 + 实时时钟）             │
+├──────────────────────────────────────────────────────────┤
+│  实时动态横幅 ticker（黑底，淘汰事件横向滚动）              │
+├──────────────────────────────────────────────────────────┤
+│  导航标签栏              [看板] [玩家] [控制] [设置]       │
+├──────────────┬───────────────────────────────────────────┤
+│              │                                           │
+│  左栏 340px  │  右栏（内容随标签页切换，左栏隐藏时全宽）     │
+│              │                                           │
+│  （仅看板）   │                                           │
+├──────────────┴───────────────────────────────────────────┤
+│  底部状态栏（黑底，系统版本 + 端口 + NoneBot2）             │
+└──────────────────────────────────────────────────────────┘
+```
+
+顶部品牌栏 + 横幅 + 导航 + 底部状态栏**全局固定**。左栏仅"看板"标签页显示，其他标签页隐藏，右栏全宽。
+
+---
+
+## 5. 四个标签页
+
+### 5.1 看板 — 实时监控
+
+**左栏（340px，仅看板）**：
+
+**倒计时面板**
+- 面板头："任务倒计时" + 标签（进行中/未开始/已暂停/已结束）
+- 大字 `MM:SS`（76px 等宽，4px 琥珀色硬边阴影）
+- 冒号 `:` blink 闪烁
+- 倒计时 < 300 秒时数字变红
+- 状态行：`● 时钟运行中`（绿点 blink）
+
+**三个统计方块**（横排三等分）
+
+| 方框 | 底色 | 数字色 | 图标 |
+|------|------|--------|------|
+| 存活 | 米色 | 黑色 | 黑心形 |
+| 淘汰 | 黑色 | 亮琥珀(发光) | 骷髅 |
+| 复活 | 琥珀 | 黑色 | 黑星形 |
+
+- 数字 44px Archivo Black，`countUpFlip` 3D 翻转递增
+- 点击时 `shakeX` 抖动
+- 面板 hover 时 `translate(-2px)` + 阴影增大
+
+**三群状态卡片**
+
+面板头："三群状态" + "3 群"。三张卡：
+
+| 卡片 | 标签 | 群号 | 说明 |
+|------|------|------|------|
+| 游戏群 | 玩家活动 | 显示/待配置 | 玩家自报淘汰，全员可发 |
+| 工作群 | 猎人专用 | 显示/待配置 | 猎人报告捕获，仅猎人QQ可发 |
+| 后台群 | 仅管理员 | 显示/待配置 | 管理指令 /开始 /暂停 等 |
+
+每张卡点击选中高亮（橙色边框），"查看详情"按钮。
+
+**右栏**：
+
+**系统日志终端**
+- 黑底 `#0d0a08` + 亮琥珀字 `#f59e0b`
+- CRT `scanLine` 动画 + 20 个 `floatParticle`
+- 面板头："系统日志 // 实时记录" + "● 记录中"(blink)
+- 内容展示最近消息处理流程：
+  ```
+  ▸ [收到] 游戏群消息: "3组张三被淘汰！"
+  ▸ 识别    正则匹配: 自报淘汰
+  ▸ 查询    数据库: 3组张三 当前状态=存活
+  ▸ 执行    写入: 存活→淘汰, 时间=14:32
+  ▸ 结果    [成功] 已更新本地数据库
+  ```
+- 底部光标 `▌` blink
+
+**任务日志时间线**
+- 面板头："任务日志" + "最近 5 条"
+- 竖向连接线（3px 黑线）+ 14x14 方形圆点标记
+  - 红：被捕获 / 黄：自报淘汰
+- 每条：时间戳(10px mono) + 圆点 + 气泡卡片(灰底，左三角箭头)
+- 卡片内容：玩家名(黑粗) + 标签(红/黄) + 猎人标签(琥珀，如有)
+- 点击展开详情（`max-height` 过渡 + 箭头旋转 90°）：
+  - 淘汰类型：猎人捕获 / 自报淘汰
+  - 操作猎人：示例姓名 (QQ:0)
+  - 所在群：工作群
+  - 消息原文：3组张三被捕获！
+  - 时间：2026-07-13 14:32:05
+- 展开前摘要一行文字
+
+**分组积分榜**
+- 面板头："分组积分榜" + "5 组"
+- 表格：组号 | 存活 | 淘汰 | 复活 | 存活率
+- 表头黑底琥珀字，行米色底
+- 存活率用血条：70px 宽 16px 高，2px 黑边框，`barFill` 动画填充
+- 存活率 ≤ 50% 血条变红
+- 行 hover 变浅琥珀底
+
+**控制按钮排**
+- 四按钮横排：开始 | 暂停 | 复活 | 结束
+- 5px 硬边阴影，hover 位移 + 阴影增大
+- 按下 `shakeX` + 位移 3px
+- 结束按钮红色底
+- 每个按钮上方有对应 SVG 图标
+
+**刷新**：5 秒轮询 `/api/status`（更新倒计时/统计），10 秒轮询 `/api/eliminations`（更新日志/横幅）
+
+---
+
+### 5.2 玩家 — 管理玩家和猎人
+
+**右栏全宽**（左栏隐藏）
+
+**导入区**
+- 面板头："导入名单" + "支持 .xlsx"
+- 两个琥珀色边框上传按钮：
+  - "导入玩家名单"：`<input type="file" accept=".xlsx">` 封装
+  - "导入猎人名单"：同上
+- 选择文件后显示文件名 + 预览表格（前 10 行，Vue `v-if`）
+- "确认导入" / "取消" 按钮
+- 导入后 toast 显示结果
+
+**玩家列表**
+
+面板头："玩家列表" + `{{ players.length }}` 人 + 搜索框（mono 等宽）+ 排序按钮
+表格列：
+
+| 组号 | 姓名 | 状态 | 淘汰时间 | 淘汰类型 | 操作 |
+|------|------|------|----------|----------|------|
+| 1 | 张三 | ❤ 存活(绿) | — | — | [淘汰] |
+| 2 | 李四 | 💀 淘汰(红) | 14:28 | 自报淘汰 | [复活] |
+
+- 操作列按钮：
+  - 存活玩家：红色"淘汰"按钮
+  - 淘汰玩家：绿色"复活"按钮
+- 行 hover 浅琥珀底
+- `v-for` 渲染，支持搜索过滤 + 排序
+
+**猎人名单**
+
+面板头："猎人名单" + 人数
+表格：QQ号 | 备注 | 删除按钮
+底部添加栏：
+
+```
+QQ号: [     ]  备注: [     ]  [添加]
+```
+
+删除需二次确认（简易弹窗或 toast 确认）
+
+**批量操作**
+
+红色"清空全部数据"按钮，点击弹出确认面板：
+```
+确认清空全部数据？此操作不可撤销。
+[确认清空]  [取消]
+```
+`v-if` 控制弹窗显隐。
+
+---
+
+### 5.3 控制 — 游戏操作
+
+**右栏全宽**
+
+**状态大屏**
+
+面板头："游戏状态"
+中央大字显示（64px Archivo Black）：
+
+| 状态 | 颜色 |
+|------|------|
+| 未开始 | 暖灰 |
+| 进行中 | 绿色，`pulseAmber` 动画 |
+| 已暂停 | 琥珀 |
+| 已结束 | 红色 |
+
+下方倒计时大字（进行中/暂停时显示）
+底部三列统计：参赛 / 存活 / 淘汰（mono 字体数字）
+
+**控制按钮组**
+
+- "开始游戏"：分钟数输入框(1-300) + 开始按钮 → 点击弹出确认 `确认开始 90 分钟的游戏？`
+- 暂停/继续：根据当前状态显示
+- 结束游戏：红色按钮 → 二次确认
+- 操作后 toast 反馈
+
+**播报间隔配置**
+
+面板内表格，5 行可编辑：
+
+| 剩余比例 | 播报间隔 |
+|----------|----------|
+| > 60% | 15 分钟 |
+| > 40% | 10 分钟 |
+| > 20% | 5 分钟 |
+| > 5% | 2 分钟 |
+| ≤ 5% | 1 分钟 |
+
+"保存配置"按钮，调用 `/api/config/update`
+
+---
+
+### 5.4 设置 — 系统配置
+
+**右栏全宽**
+
+**群号配置**
+
+面板头："群号配置" + "修改后即时生效"
+三个大号等宽输入框：
+
+```
+游戏群 QQ: [0          ]
+工作群 QQ: [0                  ]
+后台群 QQ: [0                  ]
+```
+
+"保存" 按钮 → `/api/config/update` → toast
+
+**管理员 QQ**
+
+列表 + 添加输入框 + 删除按钮
+（此功能可后续实现，先显示当前管理员列表）
+
+**猎人 QQ 管理**
+
+列表（QQ + 备注 + 删除）+ 添加输入框
+提示："也可在玩家管理标签页用 Excel 批量导入"
+
+**数据管理**
+
+2x2 网格四个操作按钮：
+- "导出 JSON" → 下载 `claw_export.json`
+- "导出 CSV" → 下载 `claw_export.csv`
+- "重置数据库" → 红色，二次确认
+- "数据库信息" → 显示表名 + 行数
+
+---
+
+## 6. Toast 通知
+
+右下角弹出，3 秒自动消失：
+
+| 类型 | 边框色 | 图标 |
+|------|--------|------|
+| 成功 | 绿色 | ✓ |
+| 错误 | 红色 | ✕ |
+| 信息 | 琥珀 | ▸ |
+
+动画：从右滑入（`translateX(100%)` → `0`），3 秒后右滑出。
+
+```html
+<div class="toast" :class="toast.type" v-if="toast">
+  <span>{{ toast.msg }}</span>
+</div>
+```
+
+---
+
+## 7. 文件上传交互
+
+1. 用户点击自定义琥珀色边框按钮
+2. 触发隐藏 `<input type="file">`
+3. 选择后显示文件名 + 预览按钮
+4. 点"确认导入"：
+   - 按钮变"导入中..." + `disabled`
+   - `fetch(url, { method: 'POST', body: formData })`
+   - 成功 → toast + 刷新列表
+   - 失败 → toast 错误信息
+
+---
+
+## 8. Vue 3 应用骨架
+
+```javascript
+const { createApp, ref, reactive, onMounted, onUnmounted, computed } = Vue;
+
+createApp({
+  setup() {
+    const currentTab = ref('dashboard');
+
+    // 响应式数据
+    const status = reactive({ status: '未知', remaining: '00:00', remaining_seconds: 0, stats: {}, groups: [] });
+    const players = ref([]);
+    const eliminations = ref([]);
+    const hunters = ref([]);
+    const toast = ref(null);
+
+    // 数据加载
+    async function fetchStatus() { /* fetch /api/status */ }
+    async function fetchEliminations() { /* fetch /api/eliminations */ }
+    async function fetchPlayers() { /* fetch /api/players */ }
+    async function fetchHunters() { /* fetch /api/hunters */ }
+
+    // 操作
+    async function startGame(minutes) { /* POST /api/game/start */ }
+    async function pauseGame() { /* POST /api/game/pause */ }
+    async function resumeGame() { /* POST /api/game/resume */ }
+    async function endGame() { /* POST /api/game/end */ }
+    async function eliminatePlayer(g, n) { /* POST /api/player/eliminate */ }
+    async function revivePlayer(g, n) { /* POST /api/player/revive */ }
+    async function clearAll() { /* POST /api/player/clear_all */ }
+    async function importPlayers(file) { /* POST /api/import/players */ }
+    async function importHunters(file) { /* POST /api/import/hunters */ }
+    async function updateConfig(updates) { /* POST /api/config/update */ }
+    async function addHunter(qq, name) { /* POST /api/config/hunter/add */ }
+    async function removeHunter(qq) { /* DELETE /api/config/hunter/{qq} */ }
+
+    // Toast
+    function showToast(msg, type = 'info') {
+      toast.value = { msg, type };
+      setTimeout(() => toast.value = null, 3000);
+    }
+
+    // 轮询
+    let poll1, poll2;
+    onMounted(() => {
+      fetchStatus();
+      fetchEliminations();
+      poll1 = setInterval(fetchStatus, 5000);
+      poll2 = setInterval(fetchEliminations, 10000);
+    });
+    onUnmounted(() => { clearInterval(poll1); clearInterval(poll2); });
+
+    // 切换标签页时加载对应数据
+    function switchTab(tab) {
+      currentTab.value = tab;
+      if (tab === 'players') { fetchPlayers(); fetchHunters(); }
+      if (tab === 'dashboard') { fetchStatus(); fetchEliminations(); }
+    }
+
+    return { /* 导出所有变量和函数给模板 */ };
+  }
+}).mount('#app');
+```
+
+---
+
+## 9. 文件清单
+
+```
+web/
+  index.html          ← 完整单页应用（Vue 3 + 内联 CSS + 内联 JS，约 1500-2000 行）
+  demo.html           ← 已有 demo 参考稿（保留不动）
+```
+
+---
+
+## 10. 响应式
+
+- 桌面 (>1100px)：左右双栏
+- 平板 (768-1100px)：单栏，左栏内容移到右栏上方
+- 手机 (<768px)：单栏，统计纵向排列，表格横向滚动
