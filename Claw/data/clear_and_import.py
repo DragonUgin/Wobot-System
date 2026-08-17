@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """清空正式库 claw.db 现有游戏数据 + 导入 sample_game_data.xlsx 一条龙。
 保留 system_config（三群号/admin_qq 等配置）与 schema_version。
 """

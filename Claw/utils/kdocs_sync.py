@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """金山文档云表格同步模块
 
 双向同步策略：

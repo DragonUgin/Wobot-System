@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """私聊播报插件 — 管理员私聊机器人发内容，自动转发到所有群
 
 用法：

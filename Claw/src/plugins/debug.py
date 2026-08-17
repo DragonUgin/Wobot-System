@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """诊断与测试插件 - 验证连接和配置是否正确"""
 import nonebot
 from nonebot import on_command, on_message

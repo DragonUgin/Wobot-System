@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """全局配置 —— 三级热加载架构
 
 1. .env 提供初始默认值

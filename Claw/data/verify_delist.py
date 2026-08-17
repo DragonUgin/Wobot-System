@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """去名单化端到端验证：导入 sample_game_data.xlsx 到临时库，确认：
 1. 任务点不再写 task_point_npcs 关联表
 2. 线索 hidden_npc_name 是文本名字（非QQ）

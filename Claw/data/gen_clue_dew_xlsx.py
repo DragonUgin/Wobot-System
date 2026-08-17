@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
 """按最新指令清单与后端模型，生成两份编号 Excel：
    - 线索编号表.xlsx  (种类=线索)
    - 露水编号表.xlsx  (种类=普通露水)

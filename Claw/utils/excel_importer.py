@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Excel 导入 — 单 Sheet 一体式
 
 重要：**第 1 行必须是表头行**（内容任意，会被跳过），数据从第 2 行开始。

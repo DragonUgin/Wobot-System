@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """计时器逻辑 - 管理倒计时、暂停恢复、自适应播报间隔"""
 from datetime import datetime, timedelta
 from utils.db import get_game_state, set_game_state, set_frenzy_mode

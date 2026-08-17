@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """工作群消息插件 — 处理 NPC/猎人的上报
 
 指令格式：

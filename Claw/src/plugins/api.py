@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Web API 路由 — 极限挑战游戏系统"""
 import io, csv, json
 from pathlib import Path

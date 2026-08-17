@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Claw - 多人淘汰游戏 QQ 群管理机器人"""
 import sys
 from pathlib import Path

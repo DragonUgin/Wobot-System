@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """生成测试步骤Excel清单 - 全员参与版"""
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side

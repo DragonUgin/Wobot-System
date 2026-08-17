@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """SQLite 数据库层 — 极限挑战游戏系统"""
 import aiosqlite
 from datetime import datetime

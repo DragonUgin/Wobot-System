@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """游戏群消息插件 — 玩家查询状态（淘汰统一由猎人在工作群执行）
 
 指令格式：

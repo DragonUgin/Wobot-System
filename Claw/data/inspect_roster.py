@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
 """只读探查 营员名单(1).xlsx 的结构：sheet名、表头、前若干行、总行数。"""
 import os, sys, openpyxl
 sys.stdout.reconfigure(encoding="utf-8")

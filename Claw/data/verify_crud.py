@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """验证五个实体的前端 CRUD 后端逻辑（露水/金露水/玩家/线索/任务点）。
 
 去名单化后调整：

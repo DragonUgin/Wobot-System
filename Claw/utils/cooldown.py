@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """冷却机制 — 抓捕冷却 + 静止卡冷却 + 护盾卡冷却（数据库持久化）
 
 冷却类型：

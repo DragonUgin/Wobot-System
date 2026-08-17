@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """管理指令插件 — 管理员在任意群均可发管理指令
 
 指令列表：

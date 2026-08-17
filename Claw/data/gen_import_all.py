@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
 """整合 4 份已生成数据 + 任务点元数据 → 一份 导入总表.xlsx
 格式对齐 utils/excel_importer.py（单 Sheet 一体式，第1行表头 A1=种类 会被跳过）。
 """

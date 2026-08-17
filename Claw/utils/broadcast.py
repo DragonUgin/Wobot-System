@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """统一广播函数 — 三群消息发送
 
 群类型：

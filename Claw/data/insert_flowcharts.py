@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
 """把两张流程图插入到对应 docx 的"附录：...流程图"标题下方。"""
 from docx import Document
 from docx.oxml import OxmlElement

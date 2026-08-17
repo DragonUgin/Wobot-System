@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """生成测试用导入数据 sample_game_data.xlsx
 
 对应 utils/excel_importer.py 的单 Sheet 一体式格式。

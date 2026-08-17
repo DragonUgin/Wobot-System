@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
 """从 营员名单(1).xlsx 生成符合 Claw 导入格式的 玩家名单.xlsx
    导入格式：种类=玩家 | 组号 | 姓名 | 备注（第1行表头，第2行起数据）
 """

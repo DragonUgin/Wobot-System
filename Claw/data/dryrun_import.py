@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """导入 + 主线关键步骤 演练脚本（写入临时库，不影响 claw.db）
 
 用法：python data/dryrun_import.py

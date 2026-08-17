@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# SPDX-License-Identifier: GPL-3.0-or-later
 """重新生成「猎人指令公式.docx」与「任务点NPC指令公式.docx」。
 
 占位符统一使用大写字母（X/Y/Z/N/M/XXX），与 src/plugins/work_group.py 文档字符串一致。

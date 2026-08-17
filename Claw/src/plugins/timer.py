@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
 """计时器和自适应播报调度插件"""
 import asyncio
 from datetime import datetime
