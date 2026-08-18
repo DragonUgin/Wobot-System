@@ -73,9 +73,13 @@
 ## 快速开始（部署）
 
 1. **首次准备**：双击 `setup.bat` 安装 Python 依赖，并按提示下载 NapCat 到 `napcat/`。
-2. **配置**：复制 `Claw/.env.example` 为 `Claw/.env`，填入 Bot QQ、三个群号、管理员 QQ。
-3. **启动**：双击 `start.bat`，NapCat 窗口用 QQ 小号扫码登录。
+2. **配置**：复制 `Claw/.env.example` 为 `Claw/.env`，填入以下字段：`BOT_QQ`（Bot 小号）、`GAME_GROUP` / `WORK_GROUP` / `BACKEND_GROUP`（三个群号）、`ADMIN_QQ`（管理员）。
+3. **启动**：双击 `start.bat`，NapCat 窗口用 Bot 小号扫码登录（NapCat 的 WebUI 在 `http://127.0.0.1:6099`）。
 4. **管理**：浏览器打开 `http://127.0.0.1:8080`，在“管理”页导入数据、开始游戏。
+
+## 升级方法
+
+更新系统时，**只替换 `Claw/` 目录中的源码文件**即可，保留 `Claw/data/claw.db`（游戏数据库）不清除，历史数据不会丢失。`.env` 配置也保留，无需重填。
 
 ## 目录结构
 

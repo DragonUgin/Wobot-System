@@ -418,7 +418,7 @@ select.input-mono{width:auto;}
     <!-- ====== 猎人（结构体卡片） ====== -->
     <template v-if="tab==='hunters'">
       <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap;">
-        <input class="input-mono" v-model="newHunterName" placeholder="输入猎人姓名（如 示例姓名）" style="flex:1;max-width:240px;">
+        <input class="input-mono" v-model="newHunterName" placeholder="输入猎人姓名（如 张三）" style="flex:1;max-width:240px;">
         <button class="btn-sm amber" @click="addHunter">＋ 新增猎人</button>
         <span style="font-size:11px;color:var(--warm-gray);">猎人按名字标识（无QQ名单）；分配线索后自动出现在列表，删除即解除其名下线索归属</span>
       </div>
