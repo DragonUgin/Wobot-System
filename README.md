@@ -4,7 +4,7 @@
 
 为大型线下户外游戏提供**实时数据追踪与信息同步**的 QQ 群机器人系统：玩家在游戏群查状态，猎人 / 任务点 NPC 在工作群发指令，管理员在后台群或 Web 页面管理。
 
-> 本项目以 **GPL-3.0-or-later** 许可证开源（当前为私有仓库，计划后续公开）。第三方组件的许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+> 本项目以 **GPL-3.0-or-later** 许可证开源。第三方组件的许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
 
 ## 项目简介
 
