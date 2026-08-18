@@ -31,6 +31,13 @@ async def _init_config():
     nonebot.logger.info(f"KDOCS_ENABLED = {config.KDOCS_ENABLED}")
     nonebot.logger.info(f"DB_PATH       = {config.DB_PATH}")
     nonebot.logger.info(f"Web           = http://127.0.0.1:8080")
+    if not config.get_admin_token():
+        nonebot.logger.warning(
+            "ADMIN_TOKEN 未配置：Web 管理页的全部 /api/* 接口将返回 401，页面无法使用。"
+            "请在 .env 中设置 ADMIN_TOKEN（建议 openssl rand -hex 24 生成）。"
+        )
+    else:
+        nonebot.logger.info("ADMIN_TOKEN 已配置，Web 管理页已启用 Bearer Token 认证。")
     nonebot.logger.info("=" * 40)
 
 nonebot.load_plugins("src/plugins")

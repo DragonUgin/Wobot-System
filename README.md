@@ -68,6 +68,7 @@
 | 玩家 | [docs/玩家指南.md](docs/玩家指南.md) |
 | 猎人 | [docs/猎人指南.md](docs/猎人指南.md) |
 | 任务点 NPC | [docs/任务点NPC指南.md](docs/任务点NPC指南.md) |
+| 其他 NPC（露水 NPC / 机动人员 / 跟组辅导员） | [docs/其他NPC指南.md](docs/其他NPC指南.md) |
 | 通用指令 | [docs/通用指令.md](docs/通用指令.md) |
 
 ## 快速开始（部署）

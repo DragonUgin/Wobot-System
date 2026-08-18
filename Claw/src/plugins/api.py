@@ -3,14 +3,42 @@
 import io, csv, json
 from pathlib import Path
 from nonebot import get_app
-from fastapi import UploadFile, File, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi import UploadFile, File, HTTPException, Request
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
 app = get_app()
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 WEB_DIR = BASE_DIR / "web"
 DATA_DIR = BASE_DIR / "data"
+
+import config as _config
+
+
+def _extract_bearer(request: Request) -> str | None:
+    """从 Authorization 头解析 Bearer Token；格式必须为 `Bearer <token>`。"""
+    auth = request.headers.get("authorization", "")
+    if auth.startswith("Bearer "):
+        return auth[len("Bearer "):].strip()
+    return None
+
+
+@app.middleware("http")
+async def _require_admin_token(request: Request, call_next):
+    """保护全部 /api/* 接口：缺失或错误的 Bearer Token 一律拒绝（fail-closed）。
+
+    ADMIN_TOKEN 为空时所有 /api/* 返回 401，Web 页无法使用（安全默认）。
+    管理页首页 `/` 不受限，由前端登录框收集 Token。
+    """
+    if request.url.path.startswith("/api/"):
+        expected = _config.get_admin_token()
+        provided = _extract_bearer(request)
+        if not expected or provided != expected:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "未授权：缺少或错误的 Token，请在管理页输入 ADMIN_TOKEN。"},
+            )
+    return await call_next(request)
 
 
 @app.get("/", response_class=HTMLResponse)

@@ -40,6 +40,7 @@ _env_work_group = _env_int("WORK_GROUP")
 _env_backend_group = _env_int("BACKEND_GROUP")
 _env_admin_qq = [int(q.strip()) for q in os.getenv("ADMIN_QQ", "").split(",") if q.strip()]
 _env_bot_qq = _env_int("BOT_QQ")
+_env_admin_token = os.getenv("ADMIN_TOKEN", "")
 
 # ============================================================
 # 金山文档（不变）
@@ -142,3 +143,8 @@ def get_admin_qqs() -> list[int]:
 
 def is_admin(qq: int) -> bool:
     return qq in get_admin_qqs()
+
+
+def get_admin_token() -> str:
+    """Web 管理页访问令牌（Bearer Token），启动时从 .env 读取；为空则所有 /api/* 接口拒绝访问。"""
+    return _env_admin_token

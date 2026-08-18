@@ -197,7 +197,17 @@ select.input-mono{width:auto;}
 
   <div class="topbar">
     <div class="brand"><h1 id="heroTitle">乌波 <span style="color:var(--amber)">//</span> 极限挑战</h1><span class="sub">露水收集管理系统</span></div>
-    <div class="top-status"><span><span class="dot"></span>系统在线</span><span class="clock">{{ clock }}</span></div>
+    <div class="top-status"><span><span class="dot"></span>系统在线</span><span class="clock">{{ clock }}</span><button v-if="!needAuth" @click="logout" style="margin-left:14px;background:transparent;border:1px solid var(--border);color:var(--warm-gray);padding:4px 10px;cursor:pointer;font-size:12px;">退出登录</button></div>
+  </div>
+
+  <!-- 登录遮罩：输入 ADMIN_TOKEN -->
+  <div v-if="loginOpen" style="position:fixed;inset:0;background:rgba(10,10,12,0.88);display:flex;align-items:center;justify-content:center;z-index:9999;">
+    <div style="background:#16161a;border:2px solid var(--amber);padding:28px 32px;max-width:420px;width:90%;box-shadow:8px 8px 0 #000;">
+      <h2 style="margin:0 0 10px;color:var(--amber);font-family:var(--mono);">管理页登录</h2>
+      <p style="font-size:13px;color:var(--warm-gray);line-height:1.6;">请输入 <code style="color:var(--amber)">.env</code> 中的 <code style="color:var(--amber)">ADMIN_TOKEN</code>。令牌仅保存在本机浏览器，不上传服务器。</p>
+      <input v-model="loginToken" @keyup.enter="submitLogin" placeholder="ADMIN_TOKEN" type="password" style="width:100%;padding:10px;background:#0e0e10;border:1px solid var(--border);color:var(--cream);font-family:var(--mono);margin-top:8px;">
+      <button @click="submitLogin" style="width:100%;margin-top:14px;padding:10px;background:var(--amber);color:#000;border:none;cursor:pointer;font-weight:700;">进入管理页</button>
+    </div>
   </div>
 
   <div class="marquee-bar">
@@ -1021,9 +1031,18 @@ createApp({
     });
     function onDewPoolChange(){if(edDew.pool!=='hunter'){edDew.hunter_name=null;}}
 
-    async function api(p,o){
-      try{const r=await fetch(p,o);if(!r.ok)throw new Error((await r.json()).detail||'Err');return await r.json();}
-      catch(e){showToast(e.message,'error');throw e;}
+    const AUTH_KEY='claw_admin_token';
+    function getToken(){return localStorage.getItem(AUTH_KEY)||'';}
+    async function api(p,o={}){
+      const headers=Object.assign({}, o.headers||{});
+      const tok=getToken();
+      if(tok)headers['Authorization']='Bearer '+tok;
+      try{
+        const r=await fetch(p,Object.assign({},o,{headers}));
+        if(r.status===401){localStorage.removeItem(AUTH_KEY);needAuth.value=true;loginOpen.value=true;try{clearInterval(p1);clearInterval(p2);}catch(_){}throw new Error('未授权：Token 无效，请重新输入');}
+        if(!r.ok){let m='请求失败';try{m=(await r.json()).detail||m;}catch(_){}throw new Error(m);}
+        return await r.json();
+      }catch(e){showToast(e.message,'error');throw e;}
     }
     async function fs(){const d=await api('/api/status');Object.assign(st,d);}
     async function fd(){dews.value=await api('/api/dews');}
@@ -1072,8 +1091,9 @@ createApp({
     async function saveDewTarget(){await api('/api/config/dew_target',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({target:dewTargetInput.value||0})});showToast('露水目标已保存','success');fs();}
     async function saveConfig(){await api('/api/config/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(cfgForm)});showToast('配置已保存','success');fetchConfig();}
     async function fetchConfig(){const d=await api('/api/config');Object.assign(cfg,d);Object.assign(cfgForm,d);}
-    async function exportJSON(){const a=document.createElement('a');a.href='/api/export/json';a.click();}
-    async function exportCSV(){const a=document.createElement('a');a.href='/api/export/csv';a.click();}
+    function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+    async function exportJSON(){const tok=getToken();const r=await fetch('/api/export/json',{headers:tok?{'Authorization':'Bearer '+tok}:{}});if(!r.ok){showToast('导出失败：'+(r.status===401?'未授权，请重新登录':'HTTP '+r.status),'error');return;}downloadBlob(await r.blob(),'claw_export.json');}
+    async function exportCSV(){const tok=getToken();const r=await fetch('/api/export/csv',{headers:tok?{'Authorization':'Bearer '+tok}:{}});if(!r.ok){showToast('导出失败：'+(r.status===401?'未授权，请重新登录':'HTTP '+r.status),'error');return;}downloadBlob(await r.blob(),'claw_export.csv');}
 
     async function saveTP(){if(!edTP.id||!edTP.name)return showToast('编号和名称必填','error');
       const body={id:edTP.id,name:edTP.name,tp_type:edTP.tp_type,card_name:edTP.card_name,golden_dew_count:edTP.golden_dew_count,status:edTP.status,static_card_count:edTP.static_card_count||0,shield_card_count:edTP.shield_card_count||0,static_card_collected:edTP.static_card_collected||0,shield_card_collected:edTP.shield_card_collected||0};
@@ -1164,7 +1184,7 @@ createApp({
     function onFile(e){const f=e.target.files[0];if(f)importFile.value=f;}
     async function doImport(){
       if(!importFile.value)return;importing.value=true;
-      try{const form=new FormData();form.append('file',importFile.value);const r=await fetch('/api/import/all',{method:'POST',body:form});if(!r.ok)throw new Error('HTTP '+r.status);const result=await r.json();
+      try{const form=new FormData();form.append('file',importFile.value);const tok=getToken();const r=await fetch('/api/import/all',{method:'POST',headers:tok?{'Authorization':'Bearer '+tok}:{},body:form});if(r.status===401){showToast('未授权，请重新登录','error');return;}if(!r.ok)throw new Error('HTTP '+r.status);const result=await r.json();
         const errs=Array.isArray(result.errors)?result.errors:[];const msg=[];
         for(const[k,v]of Object.entries(result)){if(k==='errors')continue;if(typeof v==='number'&&v>0)msg.push(k+' +'+v);}
         if(errs.length){console.warn('导入错误:',errs);showToast((msg.length?msg.join('，')+'；':'')+errs.length+' 行失败','error');}
@@ -1197,21 +1217,38 @@ createApp({
 
     function updateClock(){const n=new Date();const w=['日','一','二','三','四','五','六'][n.getDay()];clock.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+' 周'+w+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');}
     let p1,p2;
-    onMounted(()=>{
-      fs();ft();fc();fh();fetchConfig();fetchOpsLog();
+    const loginOpen=ref(false);
+    const loginToken=ref('');
+    const needAuth=ref(false);
+    function showLogin(){needAuth.value=true;loginOpen.value=true;}
+    async function submitLogin(){
+      const t=loginToken.value.trim();
+      if(!t){showToast('请输入 ADMIN_TOKEN','error');return;}
+      localStorage.setItem(AUTH_KEY,t);loginToken.value='';
+      needAuth.value=false;loginOpen.value=false;
+      await initApp();
+    }
+    function logout(){localStorage.removeItem(AUTH_KEY);needAuth.value=true;loginOpen.value=true;showToast('已退出登录','info');}
+
+    async function initApp(){
+      try{await fs();await ft();await fc();await fh();await fetchConfig();await fetchOpsLog();}
+      catch(e){/* 错误已在 api() 中提示 */}
+      clearInterval(p1);clearInterval(p2);
       p1=setInterval(fs,5000);p2=setInterval(fetchOpsLog,4000);
-      // 任务点页实时刷新
       setInterval(()=>{if(tab.value==='taskpoints'){ft();fc();fgd();fd();}},5000);
-      // 猎人页实时刷新
       setInterval(()=>{if(tab.value==='hunters'){fh();fc();fd();}},5000);
+    }
+
+    onMounted(()=>{
       setInterval(updateClock,1000);updateClock();
       nextTick(()=>{
         const el=document.getElementById('heroTitle');if(el){el.style.animation='heroGlitch 0.4s ease';setTimeout(()=>el.style.animation='glowPulse 3s infinite',400);}
       });
+      if(getToken()){initApp();}else{showLogin();}
     });
     onUnmounted(()=>{clearInterval(p1);clearInterval(p2);});
 
-    return {tab,tabs,st,dews,taskPoints,cfg,cfgForm,toast,clock,gameMinutes,importFile,importing,minStr,secStr,switchTab,startGame,pauseGame,resumeGame,endGame,saveConfig,exportJSON,exportCSV,onFile,doImport,collectDew,getClueContent,getDewTpName,tpTypeLabel,players,pstats,playerSearch,playerStatusFilter,filteredPlayers,opsLog,selectedOpsId,selectOps,undoEvent,fetchOpsLog,elimPlayer,revivePlayer,resetPlayer,clearAllData,clearConfirmText,dewSearch,dewFilter,filteredDews,dewTargetInput,saveDewTarget,frenzyActive,toggleFrenzy,resetDew,resetGoldenDew,edTP,saveTP,deleteTP,switchTPStatus,statusMenuId,adjCard,clues,clueSearch,clueTypeFilter,clueStatusFilter,clueTPFilter,filteredClues,edClue,saveClue,deleteClue,collectClue,resetClue,tpName,clueStatusChip,edDew,deleteDew,saveDew,edGD,saveGD,deleteGD,goldenDews,collectGoldenDew,edPlayer,savePlayer,deletePlayer,modal,openModal,closeModal,tpStats,dewAllStats,tpFilteredClues,tpFilteredGD,tpFilteredDews,tpDewTotal,invItems,fetchInv,tpForm,markTaskPointComplete,npcs,hunters,hunterStats,hunterItems,orphanClues,unassignedClues,newHunterName,assignClueId,newDewId,newDewVal,addHunter,removeHunter,addHunterDew,deleteHunterDew,assignSelectedClue,unassignClueFromHunter,assignOrphanToTP,addHunterClue,newClueId,newClueType,newClueContent,dewPairingInfo,onDewPoolChange,fh};
+    return {tab,tabs,st,dews,taskPoints,cfg,cfgForm,toast,clock,loginOpen,loginToken,needAuth,submitLogin,logout,gameMinutes,importFile,importing,minStr,secStr,switchTab,startGame,pauseGame,resumeGame,endGame,saveConfig,exportJSON,exportCSV,onFile,doImport,collectDew,getClueContent,getDewTpName,tpTypeLabel,players,pstats,playerSearch,playerStatusFilter,filteredPlayers,opsLog,selectedOpsId,selectOps,undoEvent,fetchOpsLog,elimPlayer,revivePlayer,resetPlayer,clearAllData,clearConfirmText,dewSearch,dewFilter,filteredDews,dewTargetInput,saveDewTarget,frenzyActive,toggleFrenzy,resetDew,resetGoldenDew,edTP,saveTP,deleteTP,switchTPStatus,statusMenuId,adjCard,clues,clueSearch,clueTypeFilter,clueStatusFilter,clueTPFilter,filteredClues,edClue,saveClue,deleteClue,collectClue,resetClue,tpName,clueStatusChip,edDew,deleteDew,saveDew,edGD,saveGD,deleteGD,goldenDews,collectGoldenDew,edPlayer,savePlayer,deletePlayer,modal,openModal,closeModal,tpStats,dewAllStats,tpFilteredClues,tpFilteredGD,tpFilteredDews,tpDewTotal,invItems,fetchInv,tpForm,markTaskPointComplete,npcs,hunters,hunterStats,hunterItems,orphanClues,unassignedClues,newHunterName,assignClueId,newDewId,newDewVal,addHunter,removeHunter,addHunterDew,deleteHunterDew,assignSelectedClue,unassignClueFromHunter,assignOrphanToTP,addHunterClue,newClueId,newClueType,newClueContent,dewPairingInfo,onDewPoolChange,fh};
   }
 }).mount('#app');
 </script>
