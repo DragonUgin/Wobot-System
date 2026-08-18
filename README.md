@@ -138,26 +138,6 @@
 - 完整许可证文本见 [LICENSE](LICENSE)。
 - 第三方依赖（NoneBot2 / FastAPI 等 MIT；NapCat 受限再分发）的许可见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)，与本项目许可证不冲突：NapCat 不随仓库分发，由使用者单独下载。
 
-## 推送到远程
-
-本仓库已配置远程 `origin`（GitHub 私有仓库）。日常改动流程：
-
-```bash
-git add <改动的文件>
-git commit -m "type: 简短说明"
-git push
-```
-
-首次推送（或分支重置后）：
-
-```bash
-git branch -M main
-git push -u origin main
-```
-
-> 提示：提交作者邮箱建议使用 GitHub 提供的 `noreply` 地址（`用户名@users.noreply.github.com`），避免真实邮箱被写入公开 git 历史（GitHub 隐私保护 GH007）。
->
-> 若推送被拒 `failed to push some refs`，说明远程已有提交：先 `git pull origin main --allow-unrelated-histories` 合并；或确认远程无重要内容后，用 `git push --force-with-lease` 覆盖（比 `--force` 安全）。
 
 ## 作者的话
 
