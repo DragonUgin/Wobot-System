@@ -1,9 +1,9 @@
 @echo off
-title Claw // Wubot Extreme Challenge - Setup
+title Claw // Wobot Extreme Challenge - Setup
 set "PDIR=%~dp0"
 
 echo ============================================
-echo   Claw // Wubot Extreme Challenge - Setup
+echo   Claw // Wobot Extreme Challenge - Setup
 echo ============================================
 echo.
 

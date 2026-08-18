@@ -1,16 +1,16 @@
 @echo off
-title Wubot-Portable
+title Wobot-Portable
 
 set "PDIR=%~dp0"
 
 echo ========================================
-echo   Wubot // Extreme Challenge
+echo   Wobot // Extreme Challenge
 echo   Portable v3.0
 echo ========================================
 echo.
 
 echo [1/2] Starting Bot...
-start "Wubot" /D "%PDIR%Claw" "%PDIR%python-embed\python.exe" bot.py
+start "Wobot" /D "%PDIR%Claw" "%PDIR%python-embed\python.exe" bot.py
 
 echo Waiting 8 seconds for Bot...
 timeout /t 8 /nobreak >nul
