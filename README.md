@@ -125,9 +125,7 @@
 
 - **教育改变晋江**（承办方）
 
-  <p align="center">
-    <img src="docs/项目图标/教育改变晋江-徽标.jpg" alt="教育改变晋江 徽标" width="160" />
-  </p>
+  <img src="docs/项目图标/教育改变晋江-徽标.jpg" alt="教育改变晋江 徽标" width="160" />
 - **2026 极限挑战策划组**
 - **第九期准大学生菁英训练营**全体辅导员与营员
 - 参考与使用的开源项目：NoneBot2、NapCat、FastAPI、openpyxl、Pillow
